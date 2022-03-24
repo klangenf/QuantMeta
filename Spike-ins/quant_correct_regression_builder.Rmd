@@ -1,0 +1,326 @@
+---
+Title: "QuantMeta: Quantification Correction Regression Builder"
+Author: "Dr. Kathryn Langenfeld"
+Output: html_notebook
+---
+
+Purpose: Detecting and correcting quantification errors caused by non-specific mapping or assembly errors requires limitations on the acceptable read depth variability across target sequences. The acceptable read depth variability may differ depending on the library preparation, if PCR amplification was performed, and the sequencing technology used as each may introduce different bias and increase or decrease how much read depth may be an intrinsic result of sequencing. Langenfeld et al. (2022) used Swift 1S Plus library prep for simultaneous sequencing of dsDNA and ssDNA with Illumina NovaSeq on SP flowcells to produce 251-bp paired-end reads. It is recommended that specific read depth variability thresholds are developed for each sequencing protocol.
+
+Load required R packages
+```{r}
+#install.packages("dplyr")
+#install.packages("ggplot2")
+#install.packages("MASS")
+#install.packages("scales")
+#install.packages("gridExtra")
+#install.packages("cowplot")
+#install.packages("ggpmisc")
+#install.packages("ggpubr")
+library(dplyr)
+library(ggplot2)
+library(MASS)
+library(scales)
+library(gridExtra)
+library(cowplot)
+library(ggpmisc)
+library(ggpubr)
+```
+
+Basic ggplot visual settings
+```{r}
+pretty_plot <- theme_classic() + theme(
+  text = element_text(family = "Lucinda Sans", color = "black"),
+  plot.margin = margin(0.5,0.5,0.5,0.5, "cm"),
+  axis.line.x.bottom = element_line(color = "black", size = 0.5),
+  axis.line.y.left = element_line(color = "black", size = 0.5),
+  panel.border = element_rect(colour="black", fill = NA, size = 0.5),
+  strip.background = element_blank(),
+  strip.text = element_text(size = 12),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  plot.title = element_text(size = 15),
+  axis.title = element_text(size = 12), 
+  axis.text.y = element_text(size = 12, color = "#000000"),
+  axis.text.x = element_text(size = 12, color = "#000000"))
+```
+
+Function to calculate R_G and number of gene copies per target sequence
+```{r}
+mapping_analysis <- function(sample_name, mapping_results, target_lengths, target_name) {
+  # make a list of the standards ID in the mapping file
+  targets = data.frame(unique(mapping_results$ID))
+  colnames(targets) <- "ID"
+  targets <- merge.data.frame(targets, target_lengths, by = "ID")
+  colnames(targets) <- c("ID", "length")
+  targets$B_G <- 0
+  targets$gene_copies <- 0
+  targets$I_G <- 0
+  targets$R_G <- 0
+  
+  for(i in 1:nrow(targets)) {
+    # select genome information on specific genome from mapping table
+    target = subset(mapping_results, ID == targets$ID[i])
+    target$I_G_x <- 0
+    
+    # Calculate total number of bases mapping to genome and the average read depth (gene copies)
+    targets$B_G[i] = sum(target$read_depth)
+    targets$gene_copies[i] = mean(target$read_depth)
+    
+    # Calculate I_G and number of positions covered by at least 1 read
+    target$I_G_x <- (target$read_depth/targets$B_G[i])*log(target$read_depth/targets$B_G[i])
+    targets$I_G[i] <- -sum(na.omit(target$I_G_x))
+    
+    # Calculate R_G
+    targets$R_G[i] = targets$I_G[i]/log(targets$length[i])
+  }  
+  
+  mapping_targets_analysis = data.frame(cbind(targets$ID, targets$R_G, targets$gene_copies))
+  colnames(mapping_targets_analysis) <- c("ID", "R_G", "total_avg_depth")
+  
+  output = "Mapping/sample/db_mapping_analysis.txt"
+  output = gsub("sample", sample_name, output)
+  output = gsub("db", target_name, output)
+  write.table(mapping_targets_analysis, file = output, append = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
+  
+  return(mapping_targets_analysis)
+} 
+```
+
+### Upload information on the spiked-in standards
+Update the code with the specific mix of sequins spiked in (if using a different file from STD_MIXES.txt must include length of each standard in a separate column)
+```{r}
+STDS <- as.data.frame(read.table("Spike-ins/STD_MIXES.txt", sep = "\t", header = TRUE, stringsAsFactors = FALSE))
+# Change MIX_A to MIX_B or MIX_C depending on spike-in mix used
+STDS_list <- subset(STDS, !(is.na(MIX_A)))
+
+# Update to "NO" if ssDNA standards were not spiked into the samples
+ssDNA_spike = "YES"
+
+if (ssDNA_spike == "YES") {
+ STDS_list <- rbind.data.frame(STDS_list, subset(STDS, !(is.na(ssDNA)))) 
+}
+
+STDS_list <- data.frame(STDS_list$ID, STDS_list$length)
+colnames(STDS_list) <- c("ID", "length")
+```
+
+### Upload the 49 bp sliding windows for reads mapped to standards references
+Update the sample list with the list of samples (recommend including downsampling results, in Langenfeld et al. (2022) used 1% and 20% downsampling)
+```{r}
+# Update this list with your sample list and the respective downsampling amount
+samples = data.frame("sample" = c("example_1", "example_2"), "downsample" = rep(100, 2))
+
+for (i in 1:nrow(samples)) {
+  filename <- "Mapping/sample/standards_window49.txt"
+  filename <- gsub("sample", samples$sample[i], filename)
+  temp <- as.data.frame(read.table(filename, header = TRUE, sep = "\t", stringsAsFactors = FALSE))
+  temp$sample <- samples$sample[i]
+  temp$downsample <- samples$downsample[i]
+  name <- "sample_w49bp"
+  name <- gsub("sample", samples$sample[i], name)
+  assign(name, temp)
+  
+  if (i == 1) {
+    standards_w49bp <- temp
+  } else {
+    standards_w49bp <- rbind.data.frame(standards_w49bp, temp)
+  }
+}
+```
+
+Import mapping analysis results for standards in each sample
+```{r}
+for (i in 1:nrow(samples)) {
+  filename = "Mapping/sample/standards_mapping.txt"
+  filename = gsub("sample", samples$sample[i], filename)
+  mapping_out <- as.data.frame(read.table(filename, sep = "\t", header = TRUE, stringsAsFactors = FALSE))
+  results <- mapping_analysis(samples$sample[i], mapping_out, STDS_list, "standards")
+  results$sample <- samples$sample[i]
+  results$downsample <- samples$downsample[i]
+  
+  if (i == 1) {
+    standards_results <- results
+  } else {
+    standards_results <- rbind.data.frame(standards_results, results)
+  }
+}
+
+standards_w49bp <- merge(standards_w49bp, standards_results, by = c("sample", "downsample", "ID"))
+standards_w49bp <- merge(standards_w49bp, STDS_list, by = c("ID"))
+standards_w49bp$total_avg_depth <- as.numeric(standards_w49bp$total_avg_depth)
+standards_w49bp$R_G <- as.numeric(standards_w49bp$R_G)
+```
+
+Remove standards that are less than the detection threshold. Update with your detection threshold from the confident_detection_regression_builder.Rmd if applicable.
+```{r}
+# Update min_R_G function if applicable
+min_R_G <- readRDS("Regressions/detection/Langenfeld_2022_R_G_detect")
+
+standards_w49bp$detect_threshold <- predict.lm(min_R_G, newdata = standards_w49bp)
+standards_w49bp <- subset(standards_w49bp, R_G > standards_w49bp$detect_threshold)
+```
+
+### Create read depth variability regressions
+There are several variables that may need to be manually adjusted. Ideal read depth variability regressions will have (1) minimize RMSE outliers in each regression and (2) alter regressions so the Q-Q plot follows the 1:1 line reasonably closely (will prevent over or under fitting the data).
+
+In Langenfeld et al. (2022), the standards were binned based on the average read depth across a target sequence in 0-10, 10-100, 100-1000, and >1000 reads/bp. These bins may need to be adjusted depending on the sequencing depth and sample diversity.
+
+The terms in each equation may vary slightly. Based on Browne et al. (2020), Illumina technologies introduce as quadratic GC bias in sequencing results. Additionally, the total average read depth and R_G may also significantly impact the observed read depth variability. In Langenfeld et al. (2022), R_G was only a significant factor for the least abundant standards with incomplete coverage (i.e., 0-10 reads/bp bin).
+```{r}
+# Alter data section to change the bin description
+# Alter proposed relationships to improve Q-Q plot and reduce outliers (see outcomes of subsequent sections for results)
+read_var_reg4 <- lm(avg_depth ~ poly(avg_GC, 2, raw = TRUE) + log(total_avg_depth), data = subset(standards_w49bp, total_avg_depth >= 1000))
+summary(read_var_reg4)
+
+read_var_reg3 <- lm(log(avg_depth) ~ poly(avg_GC, 2, raw = TRUE) + log(total_avg_depth), data = subset(standards_w49bp, total_avg_depth < 1000 & total_avg_depth >= 100))
+summary(read_var_reg3)
+
+read_var_reg2 <- lm(log(avg_depth+1) ~ poly(avg_GC, 2, raw = TRUE) + poly(log(total_avg_depth), 2, raw = TRUE), data = subset(standards_w49bp, total_avg_depth < 100 & total_avg_depth >= 10))
+summary(read_var_reg2)
+
+read_var_reg1 <- lm(log(avg_depth+1) ~ poly(avg_GC, 2, raw = TRUE) + poly(log(total_avg_depth), 2, raw = TRUE) + poly(R_G, 2, raw=TRUE), data = subset(standards_w49bp, total_avg_depth < 10))
+summary(read_var_reg1)
+```
+
+Outlier analysis from the read_var_reg{1-4} created above
+```{r}
+standards_w49bp$unique_ID <- paste(standards_w49bp$sample, standards_w49bp$ID, sep = "_")
+RMSE_results <- data.frame(unique(cbind.data.frame(standards_w49bp$unique_ID, standards_w49bp$sample, standards_w49bp$downsample, standards_w49bp$ID)))
+colnames(RMSE_results) <- c("unique_ID", "sample", "downsample", "ID")
+RMSE_results$bin <- "unknown"
+RMSE_results$RMSE <- 0
+RMSE_results$total_avg_depth <- 0
+
+for (i in 1:nrow(RMSE_results)) {
+  test <- subset(standards_w49bp, unique_ID == RMSE_results$unique_ID[i])
+  
+  # Update the read depth bins to reflect changes made above (both in the if statements and RMSE_results$bin naming)
+  if (test$total_avg_depth[1] >= 1000) {
+    pred <- predict.lm(read_var_reg4, newdata = test)
+    RMSE_results$bin[i] <- "\u2265 1,000 reads/bp"
+  }
+  if (test$total_avg_depth[1] < 1000 & test$total_avg_depth[1] >= 100) {
+    pred <- predict.lm(read_var_reg3, newdata = test)
+    RMSE_results$bin[i] <- "100-1,000 reads/bp"
+  }
+  if (test$total_avg_depth[1] < 100 & test$total_avg_depth[1] >= 10) {
+    pred <- predict.lm(read_var_reg2, newdata = test)
+    RMSE_results$bin[i] <- "10-100 reads/bp"
+  }
+  if (test$total_avg_depth[1] < 10) {
+    pred <- predict.lm(read_var_reg1, newdata = test)
+    RMSE_results$bin[i] <- "0-10 reads/bp"
+  }
+  
+  RMSE_results$RMSE[i] <- sqrt(sum((pred - test$avg_depth)^2/length(test$avg_depth)))
+  RMSE_results$total_avg_depth[i] <- test$total_avg_depth[1]
+}
+
+RMSE_results$norm_RMSE <- RMSE_results$RMSE/RMSE_results$total_avg_depth
+
+# Update the read depth bins to match naming provided above
+RMSE_results$bin <- factor(RMSE_results$bin, levels = c("0-10 reads/bp", "10-100 reads/bp", "100-1,000 reads/bp", "\u2265 1,000 reads/bp"))
+
+ggplot(RMSE_results, aes(x = bin, y = norm_RMSE)) + geom_boxplot() + pretty_plot
+
+ggsave("Regressions/read_depth_variability/boxplot_regressions.png", plot = last_plot(), width = 8, height = 5.5, dpi = 400, units = "in", limitsize = TRUE)
+```
+
+Q-Q plot analysis from the read_var_reg{1-4} created above
+```{r}
+# Update the read depth bins to match naming provided above
+read_var_reg1.stdres <- cbind.data.frame("regression" = c("0-10 reads/bp"), "stdres" = rstandard(read_var_reg1))
+read_var_reg2.stdres <- cbind.data.frame("regression" = c("10-100 reads/bp"), "stdres" = rstandard(read_var_reg2))
+read_var_reg3.stdres <- cbind.data.frame("regression" = c("100-1,000 reads/bp"), "stdres" = rstandard(read_var_reg3))
+read_var_reg4.stdres <- cbind.data.frame("regression" = c("\u2265 1,000 reads/bp"), "stdres" = rstandard(read_var_reg4))
+
+stdres <- rbind.data.frame(read_var_reg1.stdres, read_var_reg2.stdres, read_var_reg3.stdres, read_var_reg4.stdres)
+stdres$regression <- factor(stdres$regression, levels = c("0-10 reads/bp", "10-100 reads/bp", "100-1,000 reads/bp", "\u2265 1,000 reads/bp"))
+
+ggplot(stdres, aes(sample = stdres, group = regression)) + geom_qq(shape = 1, color="gray40") + 
+  geom_qq_line(linetype = "dashed") + facet_grid(.~regression) + 
+  pretty_plot + labs(x = "Normal Scores", y = "Standardized Residuals") + coord_fixed(ratio = 1)
+
+ggsave("Regressions/read_depth_variability/qq_plots_regressions.png", plot = last_plot(), width = 16, height = 5.5, dpi = 400, units = "in", limitsize = TRUE)
+```
+
+Save read depth variabilty regressions
+```{r}
+saveRDS(read_var_reg1, "Regressions/read_depth_variability/read_var_reg1")
+saveRDS(read_var_reg2, "Regressions/read_depth_variability/read_var_reg2")
+saveRDS(read_var_reg3, "Regressions/read_depth_variability/read_var_reg3")
+saveRDS(read_var_reg4, "Regressions/read_depth_variability/read_var_reg4")
+```
+
+### Once the above read depth variability regressions capture the observed read depth variability across standard sequences for all samples, move onto the following sections to determine maximum allowable root mean square error (RMSE) for read depth varability.
+Visualize the relationship between RMSE and average read depth across each sample sequence
+```{r}
+ggplot(RMSE_results, aes(x=total_avg_depth, y=RMSE, color=factor(downsample))) + 
+  geom_point() + 
+  pretty_plot +
+  geom_vline(xintercept = c(10,100,1000), linetype = "dashed") + 
+  scale_colour_brewer(palette = "Dark2") +
+  labs(x = "Average Read Depth (reads/bp)", y = "RMSE", color = "Downsample (%)") + 
+  scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x), labels = trans_format("log10", math_format(10^.x))) +
+  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x), labels = trans_format("log10", math_format(10^.x)))
+```
+
+### Create RMSE limits based on the observed RMSE with average read depth
+The regressions should be informed by the observed read depth and RMSE relationships in the above plot, below is the setup of RMSE_limit_func{1-4} used for the data in Langenfeld et al. (2022).
+```{r}
+# Create dataframe of max observed RMSE at different read depths
+RMSE_limits <- cbind.data.frame(RMSE_results, signif(RMSE_results$total_avg_depth, digits = 1))
+names(RMSE_limits)[length(names(RMSE_limits))] <- "total_avg_depth_rounded"
+RMSE_limits <- aggregate(x = RMSE_limits[c("RMSE")], by = RMSE_limits[c("total_avg_depth_rounded")], FUN = function(RMSE){y <- max(RMSE); return(y)})
+colnames(RMSE_limits) <- c("total_avg_depth", "RMSE")
+
+# Set RMSE limits per read depth bin by creating a linear regression translated up by 0.25 (in log scale)
+# Update bins to reflect bins used in the read depth variability regressions
+RMSE_limit_func1 <- lm(log(RMSE)+0.25 ~ log(total_avg_depth), data = subset(RMSE_limits, total_avg_depth < 10))
+summary(RMSE_limit_func1)
+RMSE_limit_func2 <- lm(log(RMSE)+0.25 ~ log(total_avg_depth), data = subset(RMSE_limits, total_avg_depth >= 10 & total_avg_depth < 100))
+summary(RMSE_limit_func2)
+RMSE_limit_func3 <- lm(log(RMSE)+0.25 ~ log(total_avg_depth), data = subset(RMSE_limits, total_avg_depth >= 100 & total_avg_depth < 1000))
+summary(RMSE_limit_func3)
+# In Langenfeld et al. (2022) creating a linear regression for the >= 1,000 reads/bp bin did not make sense based on the data, therefore translated up by exp(0.25) from the observed maximum RMSE for the bin instead
+RMSE_limit_func4 <- max(RMSE_limits$RMSE + exp(0.25))
+```
+
+Visualize the read depth variability thresholds
+```{r}
+predicted_cutoff1 <- data.frame("RMSE_pred" = predict(RMSE_limit_func1, subset(RMSE_limits, total_avg_depth < 10)), subset(RMSE_limits, total_avg_depth < 10))
+colnames(predicted_cutoff1) <- c("RMSE_pred", "total_avg_depth", "RMSE")
+predicted_cutoff2 <- data.frame("RMSE_pred" = predict(RMSE_limit_func2, subset(RMSE_limits, total_avg_depth >= 10 & total_avg_depth < 100)), subset(RMSE_limits, total_avg_depth >= 10 & total_avg_depth < 100))
+colnames(predicted_cutoff2) <- c("RMSE_pred", "total_avg_depth", "RMSE")
+predicted_cutoff3 <- data.frame("RMSE_pred" = predict(RMSE_limit_func3, subset(RMSE_limits, total_avg_depth >= 100 & total_avg_depth < 1000)), subset(RMSE_limits, total_avg_depth >= 100 & total_avg_depth < 1000))
+colnames(predicted_cutoff3) <- c("RMSE_pred", "total_avg_depth", "RMSE")
+# format here depends on the RMSE_limit_func{1-4} above, this should be altered if a linear relationship were to replace a constant value
+predicted_cutoff4 <- subset(RMSE_limits, total_avg_depth >= 1000)
+predicted_cutoff4 <- cbind.data.frame("total_avg_depth" = predicted_cutoff4$total_avg_depth, "RMSE" = predicted_cutoff4$RMSE)
+predicted_cutoff4$RMSE_pred <- max(predicted_cutoff4$RMSE)+exp(0.25)
+
+ggplot(RMSE_results, aes(x=total_avg_depth, y=RMSE, color=factor(downsample))) + 
+  geom_point() + 
+  pretty_plot +
+  geom_vline(xintercept = c(10,100,1000), linetype = "dashed") + 
+  scale_colour_brewer(palette = "Dark2") +
+  geom_line(color='red', data = predicted_cutoff1, aes(x=total_avg_depth, y=exp(RMSE_pred))) + 
+  geom_line(color='red', data = predicted_cutoff2, aes(x=total_avg_depth, y=exp(RMSE_pred))) +
+  geom_line(color='red', data = predicted_cutoff3, aes(x=total_avg_depth, y=exp(RMSE_pred))) +
+  geom_line(color='red', data = predicted_cutoff4, aes(x=total_avg_depth, y=RMSE_pred)) +
+  labs(x = "Average Read Depth (reads/bp)", y = "RMSE", color = "Downsample (%)") + 
+  scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x), labels = trans_format("log10", math_format(10^.x))) +
+  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x), labels = trans_format("log10", math_format(10^.x)))
+
+ggsave("Regressions/threshold_read_depth_variability/RMSE_thresholds.png", plot = last_plot(), width=8, height=6, units="in", dpi = 320, limitsize = TRUE)
+```
+
+Save read depth variability threshold regressions
+```{r}
+saveRDS(RMSE_limit_func1, "Regressions/threshold_read_depth_variability/RMSE_limit_func1")
+saveRDS(RMSE_limit_func2, "Regressions/threshold_read_depth_variability/RMSE_limit_func2")
+saveRDS(RMSE_limit_func3, "Regressions/threshold_read_depth_variability/RMSE_limit_func3")
+saveRDS(RMSE_limit_func4, "Regressions/threshold_read_depth_variability/RMSE_limit_func4")
+```
+
+### Update the Snakefile_quant_unknowns file to include these RMSE_limit_func{1-4} thresholds

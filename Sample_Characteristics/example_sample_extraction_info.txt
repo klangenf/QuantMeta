@@ -1,0 +1,3 @@
+"sample"	"CF"	"recovery"
+"example_1"	554	0.3217
+"example_2"	973	0.3281

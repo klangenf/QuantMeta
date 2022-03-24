@@ -1,0 +1,4 @@
+(1) Create symbolic links to each sample's quality controlled fastq file. Label each fast file as {sample_id}.fastq.
+
+    Symbolic links can be created as:
+        ln -s {location of qc read fastq file} {sample_id}.fastq

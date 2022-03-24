@@ -1,0 +1,12 @@
+name: bioawk
+channels:
+  - bioconda
+  - defaults
+dependencies:
+  - _libgcc_mutex=0.1=main
+  - _openmp_mutex=4.5=1_gnu
+  - bioawk=1.0=h5bf99c6_6
+  - libgcc-ng=9.3.0=h5101ec6_17
+  - libgomp=9.3.0=h5101ec6_17
+  - zlib=1.2.11=h7f8727e_4
+prefix: /home/klangenf/anaconda3/envs/bioawk

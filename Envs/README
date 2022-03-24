@@ -1,0 +1,7 @@
+The Envs directory contains .yaml files detailing the packages and versions necessary for each conda environment that snakemake will install. Rules in each Snakefile detail which conda environment is called to complete specific tasks. These conda environments may be installed separately using conda or mamba:
+
+conda env create --file {name}.yaml
+OR 
+mamba env create --file {name}.yaml
+
+If performing the Snakefile-failure_standards rules, then the mutation-simulator.yaml will be installed. However, this only loads the dependencies for the Mutation Simulator (https://github.com/mkpython3/Mutation-Simulator.git) and users will need to follow their installation instructions prior to running Snakefile-failure_standards.

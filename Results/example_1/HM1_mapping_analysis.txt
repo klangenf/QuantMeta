@@ -1,0 +1,2 @@
+"ID"	"R_G"	"gene_copies"	"R_G_cutoff"	"detection_status"
+"HM1"	"0.873133298319784"	"0.475285935085008"	"0.784114988477546"	"detected"

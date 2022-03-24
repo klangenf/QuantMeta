@@ -1,0 +1,3 @@
+"Sample"	"mapping_loc"	"lib_mass"	"mix"	"dsDNA_spike"	"ssDNA"	"ssDNA_spike"	"downsample"	"DNA_conc"
+"example_1"	"Mapping/example_1/standards"	50	"MIX_A"	0.010229	"YES"	5.7e-05	100	41.4
+"example_2"	"Mapping/example_2/standards"	50	"MIX_A"	0.010229	"YES"	5.7e-05	100	128

@@ -1,0 +1,141 @@
+# Mutate the standard sequences to make a failure set for creating detection thresholds
+
+#to run snakemake: conda activate snakemake
+
+#set a workflow config file
+configfile: "Config/config_example_samples.yaml" ### Update to your config_sample.yaml file
+SAMPLE = config["sample"] ### Update to your variable name
+
+#if want to run on just some files
+#SAMPLE = ["SPECIFIC_SAMPLE"] ### Update and remove "#" and add a # to the SAMPLE = config["sample"] line above
+
+STANDARDS = ["Map_Indexes/Langenfeld_2022_standards"] ### Update with bowtie2 mapping index of spike-in standards
+
+FAIL_SET = ["fail_standards_r1", "fail_standards_r2", "fail_standards_r3", "fail_standards_r4", "fail_standards_r5"]
+
+rule all_mutation:
+    input:
+        expand("Mapping/{samp}/{fail}_mapping.txt", samp=SAMPLE, fail=FAIL_SET),
+        expand("Map_Indexes/{fail}/fail_standards.1.bt2", fail=FAIL_SET),
+        expand("Map_Indexes/{fail}/fail_standards_lengths.txt", fail=FAIL_SET) 
+
+### Mutate standard sequences with Mutation-Simulator (https://github.com/mkpython3/Mutation-Simulator)
+
+rule mutate:
+    input:
+        "Map_Indexes/Langenfeld_2022_standards.fasta" ### Update with mapping index of spike-in standards
+    params:
+        snp="0.1",
+        others="0.02",
+        length="5"
+    conda:
+        "Envs/mutation-simulator.yaml"
+    output:
+        mut_r1="Map_Indexes/fail_standards_r1/fail_standards.fasta",
+        mut_r2="Map_Indexes/fail_standards_r2/fail_standards.fasta",
+        mut_r3="Map_Indexes/fail_standards_r3/fail_standards.fasta",
+        mut_r4="Map_Indexes/fail_standards_r4/fail_standards.fasta",
+        mut_r5="Map_Indexes/fail_standards_r5/fail_standards.fasta"
+    shell:
+        """
+        ./mutation-simulator.py {input} args -sn {params.snp} -in {params.others} -inl {params.length} -de {params.others} -del {params.length} -iv {params.others} -ivl {params.length} -du {params.others} -dul {params.length} -tl {params.others} -tll {params.length} -o {output.mut_r1}
+        ./mutation-simulator.py {output.mut_r1} args -sn {params.snp} -in {params.others} -inl {params.length} -de {params.others} -del {params.length} -iv {params.others} -ivl {params.length} -du {params.others} -dul {params.length} -tl {params.others} -tll {params.length} -o {output.mut_r2}
+        ./mutation-simulator.py {output.mut_r2} args -sn {params.snp} -in {params.others} -inl {params.length} -de {params.others} -del {params.length} -iv {params.others} -ivl {params.length} -du {params.others} -dul {params.length} -tl {params.others} -tll {params.length} -o {output.mut_r3}
+        ./mutation-simulator.py {output.mut_r3} args -sn {params.snp} -in {params.others} -inl {params.length} -de {params.others} -del {params.length} -iv {params.others} -ivl {params.length} -du {params.others} -dul {params.length} -tl {params.others} -tll {params.length} -o {output.mut_r4}
+        ./mutation-simulator.py {output.mut_r4} args -sn {params.snp} -in {params.others} -inl {params.length} -de {params.others} -del {params.length} -iv {params.others} -ivl {params.length} -du {params.others} -dul {params.length} -tl {params.others} -tll {params.length} -o {output.mut_r5}
+        """
+
+rule sequence_lengths:
+    input:
+        "Map_Indexes/{fail_set}/fail_standards.fasta"
+    conda:
+        "Envs/bioawk.yaml"
+    output:
+        "Map_Indexes/{fail_set}/fail_standards_lengths.txt"
+    shell:
+        """
+        bioawk -c fastx '{{ print $name, length($seq) }}' < {input} > {output}
+        """
+
+rule build_index:
+    input:
+        fasta="Map_Indexes/{fail_set}/fail_standards.fasta"
+    params:
+        "Map_Indexes/{fail_set}/fail_standards"
+    conda:
+        "Envs/bowtie2.yaml"
+    output:
+        "Map_Indexes/{fail_set}/fail_standards.1.bt2"
+    shell:
+        """
+        bowtie2-build -f {input.fasta} {params}
+        """
+
+### Bowtie2 mapping
+
+rule bowtie:
+    input:
+        down_R1_reads="Reads/{sample}_R1.fastq",
+        down_R2_reads="Reads/{sample}_R2.fastq"
+    params:
+        "Map_Indexes/{fail_set}/fail_standards"
+    conda:
+        "Envs/bowtie2.yaml"
+    output:
+        "Mapping/{sample}/{fail_set}/fail_standards.sam"
+    shell:
+        """
+        bowtie2 -x {params} -q -1 {input.down_R1_reads} -2 {input.down_R2_reads} -S {output}
+        """
+
+rule sam_to_bam:
+    input:
+        "Mapping/{sample}/{fail_set}/fail_standards.sam"
+    conda:
+        "Envs/bowtie2.yaml"
+    output:
+        "Mapping/{sample}/{fail_set}/fail_standards.bam"
+    shell:
+        """
+        samtools view -S -b {input} > {output}
+        """
+
+rule sort_bam:
+    input:
+        "Mapping/{sample}/{fail_set}/fail_standards.bam"
+    conda:
+        "Envs/bowtie2.yaml"
+    output:
+        "Mapping/{sample}/{fail_set}/fail_standards.sorted.bam"
+    shell:
+        """
+        samtools sort {input} -o {output}
+        samtools index {output}
+        """
+
+rule depth_bam:
+    input:
+        "Mapping/{sample}/{fail_set}/fail_standards.sorted.bam"
+    params:
+        "Map_Indexes/{fail_set}/fail_standards.fasta"
+    conda:
+        "Envs/bowtie2.yaml"
+    output:
+        "Mapping/{sample}/{fail_set}/fail_standards_depth.txt"
+    shell:
+        """
+        samtools depth -a -H {input} --reference {params} > {output}
+        """
+
+rule organize:
+    input:
+        "Mapping/{sample}/{fail_set}/fail_standards_depth.txt"
+    conda:
+        "Envs/R.yaml"
+    output:
+        "Mapping/{sample}/{fail_set}_mapping.txt"
+    script:
+        "Scripts/organize_mapping.R"
+
+
+

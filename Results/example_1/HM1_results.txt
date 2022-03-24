@@ -1,0 +1,2 @@
+"ID"	"concentration (gc/µL)"	"std deviation (gc/µL)"
+"HM1"	10.8437640426307	0.0248036064824548

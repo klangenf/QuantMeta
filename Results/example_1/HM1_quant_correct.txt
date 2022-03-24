@@ -1,0 +1,2 @@
+"ID"	"R_G"	"gene_copies"	"R_G_cutoff"	"detection_status"	"length"	"RMSE"	"RMSE_limit"	"prev_RMSE"	"frac_corrected"	"correction_status"	"reliability"
+"HM1"	0.873133298319784	0.475285935085008	0.784114988477546	"detected"	129401	1.12404401164801	1.36719877885501	1.12404401164801	0	"correctable"	"high conf/low error"

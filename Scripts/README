@@ -1,0 +1,8 @@
+This QuantMeta/Scripts directory contains the scripts that are executed in each Snakefile_{task} file in the main QuantMeta directory.
+
+The Scripts and a brief summary of their purpose and outputs are listed below:
+  - organize_mapping.R: Organize the output of the samtools depth function for downstream analysis and creating 49-bp sliding windows.
+  - sliding_window.py: Create 49-bp sliding windows that shift by 1-bp along each target sequence.
+  - quantmeta.R: Analyze the results of spike-in standards ot develop an linear regression relating relative to absolute abundances.
+  - quantmeta_summary_regression.R: Merge the results of quantmeta.R to form a single linear regression relating relative to absolute abundance for all samples.
+  - quant_unknowns.R: Calculate the concentrations of targets (contigs or sequences from databases) including the detection threshold and quantification correction steps.

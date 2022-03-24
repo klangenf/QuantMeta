@@ -1,0 +1,65 @@
+__default__:
+  jobname: "{rule}.{wildcards}"
+  nodes: 1 
+  ntaskspernode: 1
+  cpuspertask: 1
+  mempercpu: "1g"
+  time: "00-00:30:00"
+  account: "duhaimem1" ### Update to your account
+  partition: "standard"
+  mailuser: "klangenf@umich.edu" ### Update to your email address
+  mailtype: "NONE" ### Update to your preference
+  output: "Logs/%x-%j.out"
+
+downsample:
+  cpuspertask: 2
+  time: 01:00:00
+  mempercpu: "2g"
+
+mutate:
+  cpuspertask: 2
+  time: 01:00:00
+  mempercpu: "2g"
+
+build_index:
+  cpuspertask: 2
+  time: 01:00:00
+  mempercpu: "2g"
+
+bowtie:
+  cpuspertask: 8
+  time: "3-00:00:00"
+  mempercpu: "6g"
+
+sam_to_bam:
+  cpuspertask: 2
+  time: "12:00:00"
+  mempercpu: "2g"
+
+sort_bam:
+  mempercpu: "4g"
+  time: "03:00:00"
+
+depth_bam:
+  cpuspertask: 2
+  time: "02:00:00"
+  mempercpu: "4g"
+
+organize:
+  cpuspertask: 3
+  mempercpu: "30g"
+  time: "2-00:00:00"
+
+quant_meta:
+  cpuspertask: 2
+  mempercpu: "3g"
+
+sliding_window:
+  cpuspertask: 2
+  mempercpu: "15g"
+  time: "04:00:00"
+
+quantmeta_unknowns:
+  cpuspertask: 2
+  mempercpu: "15g"
+  time: "02:00:00"

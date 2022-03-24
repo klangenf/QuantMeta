@@ -1,0 +1,11 @@
+(1) Download relevant gene or genome fasta files here or create symbolic links to relevant fasta files. Label each fasta file as {target}.fasta (keep target names consistent for snakemake purposes).
+
+(2) Create files listing the length of each contig. 
+    
+    This can be created by loading bioawk and running:
+         bioawk -c fastx '{ print $name, length($seq) }' < {target}.fasta > {target}_length.txt
+
+(3) Create bowtie2 indexes in this folder.
+    
+    Load bowtie2 and run (this line of code may be edited if a fasta file is large, see bowtie2 manual):
+         bowtie2-build {target}.fasta {target}

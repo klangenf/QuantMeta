@@ -1,0 +1,2 @@
+(1) Edit the example_sample_extraction_info.txt file to include the recovery and concentration factor (CF) of microbiomes from sample collection to DNA extraction. If this information is unknown
+    or the concentration of targets in DNA extracts is desired, fill in CF and recovery columns with ones.
