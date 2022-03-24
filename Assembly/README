@@ -1,0 +1,9 @@
+(1) Create symbolic links to each sample's assembly fasta file. Label each fast file as {sample_id}.fasta.
+
+    Symbolic links can be created as:
+        ln -s {location of assembly fasta file} {sample_id}.fasta
+
+(2) Create files listing the length of each contig. 
+    
+    This can be created by loading bioawk and running:
+         bioawk -c fastx '{ print $name, length($seq) }' < {sample_id}.fasta > {sample_id}_length.txt
