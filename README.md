@@ -16,6 +16,10 @@ conda activate snakemake
 git clone ....
 cd QuantMeta
 ```
+# Dependencies
+Conda environments for dependencies can be created from the QuantMeta directory with the following commands:
+- Bioawk: ```mamba env create --file Envs/bioawk.yaml```
+- Bowtie2: ```mamba env create --file Envs/bowtie2.yaml```
 
 # Run Instructions
 ### 1. Update directories to include sample and spike-in information. 
