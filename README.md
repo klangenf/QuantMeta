@@ -23,54 +23,80 @@ Conda environments for dependencies can be created from the QuantMeta directory 
 
 # Run Instructions
 ### 1. Update directories to include sample and spike-in information. 
-- Assembly directory:
-  - Create symbolic links to each sample's assembly fasta file. Label each fast file as {sample_id}.fasta. Symbolic links can be created as: 
-    - ```ln -s {location of assembly fasta file} {sample_id}.fasta```
-  - Create files listing the length of each contig. This can be created by loading bioawk and running:
-    - ```bioawk -c fastx '{ print $name, length($seq) }' < {sample_id}.fasta > {sample_id}_length.txt```
-- Config directory:
-  - Create a sample list using the same format as config_example_samples.yaml
-  - Update cluster.yaml with your account and email information. If jobs fail due to memory errors or wall time limitations, the run allocations can be updated in the cluster.yaml script.
-- Map_Indexes directory:
+#### 1.1 Configure Assembly directory to include contig files and a list of sequences lengths.
+- Create symbolic links to each sample's assembly fasta file. Label each fast file as {sample_id}.fasta.
+- Create files listing the length of each contig. This can be created by installing bioawk conda environment and loading bioawk.
+```
+conda activate bioawk
+cd Assembly
+ln -s {location of assembly fasta file} {sample_id}.fasta
+bioawk -c fastx '{ print $name, length($seq) }' < {sample_id}.fasta > {sample_id}_length.txt
+```
+#### 1.2 Configure Config directory with a sample list and hpc submission information.
+- Create a sample list file using the same format as config_example_samples.yaml. Format:
+```
+samples:
+    sample_name_1
+    sample_name_2
+    ...
+    sample_name_x
+```
+- Update cluster.yaml with your account and email information. If jobs fail due to memory errors or wall time limitations, the run allocations can be updated in the cluster.yaml script.
+#### 1.3 Configure Map_Indexes directory with information about the target sequences that reads will be mapped onto. 
+- For each set of targets, the following steps must be complete. Update {target} in the code to reflect sequences within the fasta files that reads will be mapped to.
   - Download relevant gene or genome fasta files here or create symbolic links to relevant fasta files. Label each fasta file as {target}.fasta (keep target names consistent for snakemake purposes).
-  - Create files listing the length of each contig. This can be created by loading bioawk and running:
-    - ```bioawk -c fastx '{ print $name, length($seq) }' < {target}.fasta > {target}_length.txt```
-  - Create bowtie2 indexes in this folder. Load bowtie2 and run (this line of code may be edited if a fasta file is large, see bowtie2 manual):
-    - ```bowtie2-build {target}.fasta {target}```
-- Reads directory:
-  - Create symbolic links to each sample's quality controlled fastq file. Label each fast file as {sample_id}.fastq. Symbolic links can be created as:
-    - ```ln -s {location of qc read fastq file} {sample_id}.fastq```
-- Sample_Characteristics directory:
-  - Edit the example_sample_extraction_info.txt file to include the recovery and concentration factor (CF) of microbiomes from sample collection to DNA extraction. If this information is unknown or the concentration of targets in DNA extracts is desired, fill in CF and recovery columns with ones.
-- Spike-ins directory:
-  - Provide information on each sample using the format in thei example_sample_info.txt template
-  - Provide ddPCR measurements of each spiked-in standard (if applicable) in the same format as example_stds_ddPCR_conc.txt template
-  - Check that STD_MIXES.txt includes all relevant spiked-in standard mixes, adjust by adding or removing information as necessary for your particular samples.
+  - Create files listing the length of each contig with bioawk.
+  - Create bowtie2 indexes in this folder (this bowtie2 line of code may be edited if a fasta file is large, see bowtie2 manual).
+```
+conda activate bioawk
+cd Map_Indexes
+bioawk -c fastx '{ print $name, length($seq) }' < {target}.fasta > {target}_length.txt
+conda deactivate
+conda activate bowtie2
+bowtie2-build {target}.fasta {target}
+```
+#### 1.4 Configure Reads directory 
+- Create symbolic links to each sample's quality controlled fastq file. Label each fast file as {sample_id}.fastq.
+```
+cd Reads
+ln -s {location of qc read fastq file} {sample_id}.fastq
+```
+#### 1.5 Configure Sample_Characteristics directory:
+- Edit the example_sample_extraction_info.txt file to include the recovery and concentration factor (CF) of microbiomes from sample collection to DNA extraction. If this information is unknown or the concentration of targets in DNA extracts is desired, fill in CF and recovery columns with ones.
+#### 1.6 Configure Spike-ins directory:
+- Provide information on each sample using the format in the example_sample_info.txt template.
+- Provide ddPCR measurements of each spiked-in standard (if applicable) in the same format as example_stds_ddPCR_conc.txt template.
+- Check that STD_MIXES.txt includes all relevant spiked-in standard mixes, adjust by adding or removing information as necessary for your particular samples.
 ### 2. Map reads to standard sequences 
-- Each step of this process is performed by running “Snakefile-map_standards”
-  - Update “Snakefile-map_standards” based on your samples
-    - Update configfile for your sample list
-      - *Line 6* ```configfile: Config/{your sample list}.yaml```
-    - Update SAMPLE wildcard to reflect your sample variable name (if changed from sample)
-      - *Line 7* ```SAMPLE = config[“{your variable}”]```
-      - OR if running Snakefile-map_standards on a subset of samples, update *Line 10* ```SAMPLE = [“{your specific sample name}”, “{another specific sample name}”]```
-    - If using a different set of spike-in standards than Langenfeld et al. (2022), update the Snakefile to use the other bowtie indexes and .fasta file in Map-Indexes directory
-      - *Line 25* ```“Map_Indexes/{your standards index name}"```
-      - *Line 64* ```“Map_Indexes/{your standards fasta name}.fasta"```
-  - Update “hpc_submission/map_standards_hpc_run.sh” to represent your system configuration
-    - In the Job Submission Options section, Update the allocation information 
-    - In the Job Commands section, update the PATH to the user specific storage locations for the anaconda environments that snakemake will create and use 
-  - Run Snakefile-map_standards on all or selected samples
-    - From the QuantMeta directory:
-      - ```conda activate snakemake```
-      - ```sbatch hpc_submission/map_standards_hpc_run.sh```
-    - Snakemake will automatically submit all of the jobs. Output logs from each individual job will be located in the Logs directory.
-    - [Optional] We recommend performing a dry run prior to job submission to the hpc from the QuantMeta directory.
-      - ```conda activate snakemake```
-      - ```snakemake -prn -s Snakefile-map_standards```
-      - Check that all expected rules and number of executions are listed in DAG of jobs snakemake prints out.
-    - *Optional:* If your jobs fail for any reason, snakemake will need to be unlocked prior to rerunning. This can be completed with:
-      - ```snakemake -prn -s Snakefile-map_standards --unlock```
+#### 2.1 Each step of this process is performed by running “Snakefile-map_standards”
+- Update “Snakefile-map_standards” based on your samples
+  - Update configfile for your sample list
+    - *Line 6* ```configfile: Config/{your sample list}.yaml```
+  - Update SAMPLE wildcard to reflect your sample variable name (if changed from sample)
+    - *Line 7* ```SAMPLE = config[“{your variable}”]```
+    - OR if running Snakefile-map_standards on a subset of samples,
+      update *Line 10* ```SAMPLE = [“{your specific sample name}”, “{another specific sample name}”]```
+  - If using a different set of spike-in standards than Langenfeld et al. (2022), update the Snakefile to use the other bowtie indexes and .fasta file in Map-Indexes directory
+    - *Line 25* ```“Map_Indexes/{your standards index name}"```
+    - *Line 64* ```“Map_Indexes/{your standards fasta name}.fasta"```
+- Update “hpc_submission/map_standards_hpc_run.sh” to represent your system configuration
+  - In the Job Submission Options section, Update the allocation information 
+  - In the Job Commands section, update the PATH to the user specific storage locations for the anaconda environments that snakemake will create and use 
+- Run Snakefile-map_standards on all or selected samples
+  - From the QuantMeta directory:
+    ```
+    conda activate snakemake
+    sbatch hpc_submission/map_standards_hpc_run.sh
+    ```
+  - Snakemake will automatically submit all of the jobs. Output logs from each individual job will be located in the Logs directory.
+  - *Optional:* We recommend performing a dry run prior to job submission to the hpc from the QuantMeta directory.
+     ```
+     conda activate snakemake
+     snakemake -prn -s Snakefile-map_standards
+     ```
+    Check that all expected rules and number of executions are listed in DAG of jobs snakemake prints out.
+  - *Optional:* If your jobs fail for any reason, snakemake will need to be unlocked prior to rerunning. This can be completed with:
+     ```snakemake -prn -s Snakefile-map_standards --unlock```
 ### 3. *Optional:* Determine detection threshold
 - The provided entropy-based detection threshold was created based on a minimum coverage of 10% and read distribution of 0.3 (ratio of observed read distribution to Poisson distribution of reads). If this threshold is deemed inadequate for your analysis needs, a new detection threshold may be created. The following is the list of steps to create a new detection threshold:
   - Perform downsampling of reads and map the downsampled reads to the standard sequences
