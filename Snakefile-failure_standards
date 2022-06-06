@@ -76,7 +76,8 @@ rule build_index:
 rule bowtie:
     input:
         down_R1_reads="Reads/{sample}_R1.fastq",
-        down_R2_reads="Reads/{sample}_R2.fastq"
+        down_R2_reads="Reads/{sample}_R2.fastq",
+        trigger="Map_Indexes/{fail_set}/fail_standards.1.bt2"
     params:
         "Map_Indexes/{fail_set}/fail_standards"
     conda:
