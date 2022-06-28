@@ -60,7 +60,7 @@ ln -s {location of qc read fastq file} {sample_id}.fastq
 ```
 - *Optional:* Provide ddPCR measurements of each spiked-in standard (if applicable) in the same format as example_stds_ddPCR_conc.txt template.
 - Check that STD_MIXES.txt includes all relevant spiked-in standard mixes, adjust by adding or removing information as necessary for your particular samples.
-#### 1.5 [Optional, only for reference-based quantification]Configure Map_Indexes directory with information about the target sequences that reads will be mapped onto. 
+#### 1.5 *Optional (only for reference-based quantification):* Configure Map_Indexes directory with information about the target sequences that reads will be mapped onto. 
 - For each set of targets, the following steps must be complete. Update {target} in the code to reflect sequences within the fasta files that reads will be mapped to.
   - Download relevant gene or genome fasta files here or create symbolic links to relevant fasta files. Label each fasta file as {target}.fasta (keep target names consistent for snakemake purposes).
   - Create files listing the length of each contig with bioawk.
@@ -73,7 +73,7 @@ conda deactivate
 conda activate bowtie2
 bowtie2-build {target}.fasta {target}
 ```
-#### 1.6 [Optional, only for contig-based quantification] Configure Assembly directory to include contig files and a list of sequences lengths.
+#### 1.6 *Optional (only for contig-based quantification):* Configure Assembly directory to include contig files and a list of sequences lengths.
 - Create symbolic links to each sample's assembly fasta file. Label each fast file as {sample_id}.fasta.
 - Create files listing the length of each contig. This can be created by installing bioawk conda environment and loading bioawk.
 ```
