@@ -23,16 +23,7 @@ Conda environments for dependencies can be created from the QuantMeta directory 
 
 # Run Instructions
 ### 1. Update directories to include sample and spike-in information. 
-#### 1.1 Configure Assembly directory to include contig files and a list of sequences lengths.
-- Create symbolic links to each sample's assembly fasta file. Label each fast file as {sample_id}.fasta.
-- Create files listing the length of each contig. This can be created by installing bioawk conda environment and loading bioawk.
-```
-conda activate bioawk
-cd Assembly
-ln -s {location of assembly fasta file} {sample_id}.fasta
-bioawk -c fastx '{ print $name, length($seq) }' < {sample_id}.fasta > {sample_id}_length.txt
-```
-#### 1.2 Configure Config directory with a sample list and hpc submission information.
+#### 1.1 Configure Config directory with a sample list and hpc submission information.
 - Create a sample list file using the same format as config_example_samples.yaml. Format:
 ```
 samples:
@@ -42,29 +33,16 @@ samples:
     sample_name_x
 ```
 - Update cluster.yaml with your account and email information. If jobs fail due to memory errors or wall time limitations, the run allocations can be updated in the cluster.yaml script.
-#### 1.3 Configure Map_Indexes directory with information about the target sequences that reads will be mapped onto. 
-- For each set of targets, the following steps must be complete. Update {target} in the code to reflect sequences within the fasta files that reads will be mapped to.
-  - Download relevant gene or genome fasta files here or create symbolic links to relevant fasta files. Label each fasta file as {target}.fasta (keep target names consistent for snakemake purposes).
-  - Create files listing the length of each contig with bioawk.
-  - Create bowtie2 indexes in this folder (this bowtie2 line of code may be edited if a fasta file is large, see bowtie2 manual).
-```
-conda activate bioawk
-cd Map_Indexes
-bioawk -c fastx '{ print $name, length($seq) }' < {target}.fasta > {target}_length.txt
-conda deactivate
-conda activate bowtie2
-bowtie2-build {target}.fasta {target}
-```
-#### 1.4 Configure Reads directory by adding symbolic links to the quality controlled fastq files.
+#### 1.2 Configure Reads directory by adding symbolic links to the quality controlled fastq files.
 - Create symbolic links to each sample's quality controlled fastq file. Label each fast file as {sample_id}.fastq.
 ```
 cd Reads
 ln -s {location of qc read fastq file} {sample_id}.fastq
 ```
-#### 1.5 Configure Sample_Characteristics directory with concentration factor and recovery results. 
+#### 1.3 Configure Sample_Characteristics directory with concentration factor and recovery results. 
 - Edit the example_sample_extraction_info.txt file to include the recovery and concentration factor (CF) of microbiomes from sample collection to DNA extraction. 
     - If this information is unknown or the concentration of targets in DNA extracts is desired, fill in CF and recovery columns with ones.
-#### 1.6 Configure Spike-ins directory to provide information on the spike-in standards.
+#### 1.4 Configure Spike-ins directory to provide information on the spike-in standards.
 - Provide information on each sample using the format in the example_sample_info.txt template.
     - "Sample": sample names matching the list in the "Config/config_{sample name}_samples.yaml"
     - "mapping_loc": location of bowtie2 mapping results, the results will automatically end up in "Mapping/{sample name}/standards"
@@ -82,6 +60,28 @@ ln -s {location of qc read fastq file} {sample_id}.fastq
 ```
 - *Optional:* Provide ddPCR measurements of each spiked-in standard (if applicable) in the same format as example_stds_ddPCR_conc.txt template.
 - Check that STD_MIXES.txt includes all relevant spiked-in standard mixes, adjust by adding or removing information as necessary for your particular samples.
+#### 1.5 [Optional, only for reference-based quantification]Configure Map_Indexes directory with information about the target sequences that reads will be mapped onto. 
+- For each set of targets, the following steps must be complete. Update {target} in the code to reflect sequences within the fasta files that reads will be mapped to.
+  - Download relevant gene or genome fasta files here or create symbolic links to relevant fasta files. Label each fasta file as {target}.fasta (keep target names consistent for snakemake purposes).
+  - Create files listing the length of each contig with bioawk.
+  - Create bowtie2 indexes in this folder (this bowtie2 line of code may be edited if a fasta file is large, see bowtie2 manual).
+```
+conda activate bioawk
+cd Map_Indexes
+bioawk -c fastx '{ print $name, length($seq) }' < {target}.fasta > {target}_length.txt
+conda deactivate
+conda activate bowtie2
+bowtie2-build {target}.fasta {target}
+```
+#### 1.6 [Optional, only for contig-based quantification] Configure Assembly directory to include contig files and a list of sequences lengths.
+- Create symbolic links to each sample's assembly fasta file. Label each fast file as {sample_id}.fasta.
+- Create files listing the length of each contig. This can be created by installing bioawk conda environment and loading bioawk.
+```
+conda activate bioawk
+cd Assembly
+ln -s {location of assembly fasta file} {sample_id}.fasta
+bioawk -c fastx '{ print $name, length($seq) }' < {sample_id}.fasta > {sample_id}_length.txt
+```
 ### 2. Map reads to standard sequences 
 #### 2.1 Each step of this process is performed by running “Snakefile-map_standards”.
 - Update “Snakefile-map_standards” based on your samples
