@@ -1,7 +1,7 @@
 # QuantMeta
 QuantMeta uses the results of sequencing metagenomes spiked with known concentrations of standards to determine the absolute abundance of target genes, genomes, or contigs within metagenomes. The pipeline provides a method for applying rigorous quantitative limitations to potential targets to improve the detection confidence and quantification accuracy.
 
-See more details in the publication. The pipeline was developed using a set of 86 dsDNA standards developed by Hardwick et al. (2020) complimented with a set of 5 ssDNA standards. However, the pipeline allows the spike-in standards to be amended based on the users selected standards.
+See more details in the publication. The pipeline was developed using a set of 86 dsDNA standards developed by Hardwick et al. (2018) complimented with a set of 5 ssDNA standards. However, the pipeline allows the spike-in standards to be amended based on the users selected standards.
 
 Please cite our work: ... 
 
