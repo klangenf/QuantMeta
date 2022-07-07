@@ -13,7 +13,7 @@ conda install -n base -c conda-forge mamba
 conda activate base
 mamba create -c conda-forge -c bioconda -n snakemake snakemake
 conda activate snakemake
-git clone ....
+git clone https://github.com/klangenf/QuantMeta.git
 cd QuantMeta
 ```
 # Dependencies
@@ -193,7 +193,7 @@ The provided entropy-based detection threshold was created based on a minimum co
     - *Line 39* ```spikes="Spike-ins/{your specific info table}.txt"```
     - *Line 23* ```STD_MIXES="Spike-ins/STD_MIXES.txt"``` (check that this STD_MIXES.txt file includes your specific standards, alter if necessary)
     - *Line 24* ```ddPCR="Spike-ins/{your ddPCR/qPCR standard measurements}.txt"``` (Update to your specific ddPCR/qPCR measurements or a blank file if ddPCR or qPCR measurements were not made of spike-in standards)
-    - *Line 25* ```detect_reg="Regressions/detection/{your R_G_ detect regression}"``` (Only update if the optional step 3 was performed)
+    - *Line 25* ```detect_reg="Regressions/detection/{your E_detect regression}"``` (Only update if the optional step 3 was performed)
   - Update “hpc_submission/quantmeta_hpc_run.sh” to represent your system configuration
     - In the Job Submission Options section, Update the allocation information 
     - In the Job Commands section, update the PATH to the user specific storage locations for the anaconda environments that snakemake will create and use 
@@ -233,7 +233,7 @@ The read depth variability regressions and RMSE thresholds may be specific to th
     - *Line 104* ```regression="Regressions/quantification/{output of quantmeta}"``` (If using separate regressions for each sample, update this field to include the {sample} wildcard)
     - *Line 105* ```bin_assign= "NA"``` (Update to a file binning contigs. The file should be a tab separated file with two columns: "contig_ID" and "ID" where "contig_ID" provides unique identifiers for each contig and "ID" is the respective bin name for the contig)
     - *Line 109* ```type="database"``` (type should be database if mapping reads to any sequence from a database of previous sequencing, change to contigs or MAGs if mapping reads to a sequence derived from the samples)
-    - *Line 110* ```detect_regression="Regressions/detection/{your R_G_ detect regression}"``` (Only update if the optional step 3 was performed)
+    - *Line 110* ```detect_regression="Regressions/detection/{your E_detect regression}"``` (Only update if the optional step 3 was performed)
     - *Line 111* ```read_var_regression_1="Regressions/read_depth_variability/{your 0-10 reads/bp regression}"``` (Only update if the optional step 5 was performed)
     - *Line 112* ```read_var_regression_2="Regressions/read_depth_variability/{your 10-100 reads/bp regression}"``` (Only update if the optional step 5 was performed)
     - *Line 113* ```read_var_regression_3="Regressions/read_depth_variability/{your 100-1000 reads/bp regression}"``` (Only update if the optional step 5 was performed)
