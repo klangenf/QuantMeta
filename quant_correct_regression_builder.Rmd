@@ -44,7 +44,7 @@ pretty_plot <- theme_classic() + theme(
   axis.text.x = element_text(size = 12, color = "#000000"))
 ```
 
-Function to calculate R_G and number of gene copies per target sequence
+Function to calculate E_rel and number of gene copies per target sequence
 ```{r}
 mapping_analysis <- function(sample_name, mapping_results, target_lengths, target_name) {
   # make a list of the standards ID in the mapping file
@@ -55,7 +55,7 @@ mapping_analysis <- function(sample_name, mapping_results, target_lengths, targe
   targets$B_G <- 0
   targets$gene_copies <- 0
   targets$I_G <- 0
-  targets$R_G <- 0
+  targets$E_rel <- 0
   
   for(i in 1:nrow(targets)) {
     # select genome information on specific genome from mapping table
@@ -70,12 +70,12 @@ mapping_analysis <- function(sample_name, mapping_results, target_lengths, targe
     target$I_G_x <- (target$read_depth/targets$B_G[i])*log(target$read_depth/targets$B_G[i])
     targets$I_G[i] <- -sum(na.omit(target$I_G_x))
     
-    # Calculate R_G
-    targets$R_G[i] = targets$I_G[i]/log(targets$length[i])
+    # Calculate E_rel
+    targets$E_rel[i] = targets$I_G[i]/log(targets$length[i])
   }  
   
-  mapping_targets_analysis = data.frame(cbind(targets$ID, targets$R_G, targets$gene_copies))
-  colnames(mapping_targets_analysis) <- c("ID", "R_G", "total_avg_depth")
+  mapping_targets_analysis = data.frame(cbind(targets$ID, targets$E_rel, targets$gene_copies))
+  colnames(mapping_targets_analysis) <- c("ID", "E_rel", "total_avg_depth")
   
   output = "Mapping/sample/db_mapping_analysis.txt"
   output = gsub("sample", sample_name, output)
@@ -148,16 +148,16 @@ for (i in 1:nrow(samples)) {
 standards_w49bp <- merge(standards_w49bp, standards_results, by = c("sample", "downsample", "ID"))
 standards_w49bp <- merge(standards_w49bp, STDS_list, by = c("ID"))
 standards_w49bp$total_avg_depth <- as.numeric(standards_w49bp$total_avg_depth)
-standards_w49bp$R_G <- as.numeric(standards_w49bp$R_G)
+standards_w49bp$E_rel <- as.numeric(standards_w49bp$E_rel)
 ```
 
 Remove standards that are less than the detection threshold. Update with your detection threshold from the confident_detection_regression_builder.Rmd if applicable.
 ```{r}
-# Update min_R_G function if applicable
-min_R_G <- readRDS("Regressions/detection/Langenfeld_2022_R_G_detect")
+# Update E_detect function if applicable
+E_detect <- readRDS("Regressions/detection/Langenfeld_2022_E_detect")
 
-standards_w49bp$detect_threshold <- predict.lm(min_R_G, newdata = standards_w49bp)
-standards_w49bp <- subset(standards_w49bp, R_G > standards_w49bp$detect_threshold)
+standards_w49bp$detect_threshold <- predict.lm(E_detect, newdata = standards_w49bp)
+standards_w49bp <- subset(standards_w49bp, E_rel > standards_w49bp$detect_threshold)
 ```
 
 ### Create read depth variability regressions
@@ -165,7 +165,7 @@ There are several variables that may need to be manually adjusted. Ideal read de
 
 In Langenfeld et al. (2022), the standards were binned based on the average read depth across a target sequence in 0-10, 10-100, 100-1000, and >1000 reads/bp. These bins may need to be adjusted depending on the sequencing depth and sample diversity.
 
-The terms in each equation may vary slightly. Based on Browne et al. (2020), Illumina technologies introduce as quadratic GC bias in sequencing results. Additionally, the total average read depth and R_G may also significantly impact the observed read depth variability. In Langenfeld et al. (2022), R_G was only a significant factor for the least abundant standards with incomplete coverage (i.e., 0-10 reads/bp bin).
+The terms in each equation may vary slightly. Based on Browne et al. (2020), Illumina technologies introduce as quadratic GC bias in sequencing results. Additionally, the total average read depth and E_rel may also significantly impact the observed read depth variability. In Langenfeld et al. (2022), E_rel was only a significant factor for the least abundant standards with incomplete coverage (i.e., 0-10 reads/bp bin).
 ```{r}
 # Alter data section to change the bin description
 # Alter proposed relationships to improve Q-Q plot and reduce outliers (see outcomes of subsequent sections for results)
@@ -178,7 +178,7 @@ summary(read_var_reg3)
 read_var_reg2 <- lm(log(avg_depth+1) ~ poly(avg_GC, 2, raw = TRUE) + poly(log(total_avg_depth), 2, raw = TRUE), data = subset(standards_w49bp, total_avg_depth < 100 & total_avg_depth >= 10))
 summary(read_var_reg2)
 
-read_var_reg1 <- lm(log(avg_depth+1) ~ poly(avg_GC, 2, raw = TRUE) + poly(log(total_avg_depth), 2, raw = TRUE) + poly(R_G, 2, raw=TRUE), data = subset(standards_w49bp, total_avg_depth < 10))
+read_var_reg1 <- lm(log(avg_depth+1) ~ poly(avg_GC, 2, raw = TRUE) + poly(log(total_avg_depth), 2, raw = TRUE) + poly(E_rel, 2, raw=TRUE), data = subset(standards_w49bp, total_avg_depth < 10))
 summary(read_var_reg1)
 ```
 

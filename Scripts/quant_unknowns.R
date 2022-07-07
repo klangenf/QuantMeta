@@ -35,7 +35,7 @@ library(scales)
 
 ##### Determine coverage, average read depth (i.e. gene copies), and detection threshold parameters of the standards ##############################
 detection_threshold <- function(mapping_results, length) {
-  min_R_G <- readRDS(snakemake@params[[4]])
+  E_detect <- readRDS(snakemake@params[[4]])
   
   # make a list of the standards ID in the mapping file
   mapping_results <- as.data.frame(read.table(mapping_results, sep = "\t", header = TRUE, stringsAsFactors = FALSE))
@@ -45,7 +45,7 @@ detection_threshold <- function(mapping_results, length) {
   targets$B_G <- 0
   targets$gene_copies <- 0
   targets$I_G <- 0
-  targets$R_G <- 0
+  targets$E_rel <- 0
   
   for(i in 1:nrow(targets)) {
     # select genome information on specific genome from mapping table
@@ -60,17 +60,17 @@ detection_threshold <- function(mapping_results, length) {
     target$I_G_x <- (target$read_depth/targets$B_G[i])*log(target$read_depth/targets$B_G[i])
     targets$I_G[i] <- -sum(na.omit(target$I_G_x))
     
-    # Calculate R_G
-    targets$R_G[i] = targets$I_G[i]/log(targets$length[i])
+    # Calculate E_rel
+    targets$E_rel[i] = targets$I_G[i]/log(targets$length[i])
     
-    # Calculate min_R_G
-    targets$R_G_cutoff <- predict(min_R_G, targets)
+    # Calculate E_detect
+    targets$E_detect <- predict(E_detect, targets)
   }
   
   targets$detection_status <- "not_detected"
-  targets$detection_status[targets$R_G >= targets$R_G_cutoff] <- "detected"
+  targets$detection_status[targets$E_rel >= targets$E_detect] <- "detected"
   
-  mapping_targets_analysis = cbind.data.frame("ID" = targets$ID, "R_G" = targets$R_G, "gene_copies" = targets$gene_copies, "R_G_cutoff" = targets$R_G_cutoff, "detection_status" = targets$detection_status)
+  mapping_targets_analysis = cbind.data.frame("ID" = targets$ID, "E_rel" = targets$E_rel, "gene_copies" = targets$gene_copies, "E_detect" = targets$E_detect, "detection_status" = targets$detection_status)
   
   write.table(mapping_targets_analysis, file = snakemake@output[[3]], append = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
   
@@ -229,7 +229,7 @@ quant_correction_v5 <- function(input_info, sliding_window, quad_reg1, quad_reg2
         wind_clean$avg_depth[wind_clean$nonspec_region == "YES" & wind_clean$avg_depth < wind_clean$lower] <- 
           wind_clean$lower[wind_clean$nonspec_region == "YES" & wind_clean$avg_depth < wind_clean$lower]
         # Remove unnecessary columns from wind_clean
-        wind_clean <- cbind.data.frame("ID" = wind_clean$ID, "avg_GC" = wind_clean$avg_GC, "avg_depth" = wind_clean$avg_depth, "R_G" = wind_clean$R_G, "total_avg_depth" = wind_clean$total_avg_depth, "R_G_cutoff" = wind_clean$R_G_cutoff, "detection_status" = wind_clean$detection_status,
+        wind_clean <- cbind.data.frame("ID" = wind_clean$ID, "avg_GC" = wind_clean$avg_GC, "avg_depth" = wind_clean$avg_depth, "E_rel" = wind_clean$E_rel, "total_avg_depth" = wind_clean$total_avg_depth, "E_detect" = wind_clean$E_detect, "detection_status" = wind_clean$detection_status,
                                        "length" = wind_clean$length, "initial_avg_depth" = wind_clean$initial_avg_depth)
         # Recalculate average read depth based on corrected values and save it to input_info data frame
         wind_clean$total_avg_depth <- mean(wind_clean$avg_depth)
@@ -486,11 +486,11 @@ quant_correction_contigs <- function(input_info, sliding_window, bin_assignment,
       }
       # Remove unnecessary columns from wind_clean
       if (is.na(bin_assignment)) {
-        wind_clean <- cbind.data.frame("ID" = wind_clean$ID, "avg_GC" = wind_clean$avg_GC, "avg_depth" = wind_clean$avg_depth, "R_G" = wind_clean$R_G, "total_avg_depth" = wind_clean$total_avg_depth,
-                                     "R_G_cutoff" = wind_clean$R_G_cutoff, "detection_status" = wind_clean$detection_status, "length" = wind_clean$length, "initial_avg_depth" = wind_clean$initial_avg_depth)
+        wind_clean <- cbind.data.frame("ID" = wind_clean$ID, "avg_GC" = wind_clean$avg_GC, "avg_depth" = wind_clean$avg_depth, "E_rel" = wind_clean$E_rel, "total_avg_depth" = wind_clean$total_avg_depth,
+                                     "E_detect" = wind_clean$E_detect, "detection_status" = wind_clean$detection_status, "length" = wind_clean$length, "initial_avg_depth" = wind_clean$initial_avg_depth)
       } else {
-        wind_clean <- cbind.data.frame("contig_ID" = wind_clean$contig_ID, "ID" = wind_clean$ID, "avg_GC" = wind_clean$avg_GC, "avg_depth" = wind_clean$avg_depth, "R_G" = wind_clean$R_G, "total_avg_depth" = wind_clean$total_avg_depth,
-                                       "R_G_cutoff" = wind_clean$R_G_cutoff, "detection_status" = wind_clean$detection_status, "length" = wind_clean$length, "initial_avg_depth" = wind_clean$initial_avg_depth)
+        wind_clean <- cbind.data.frame("contig_ID" = wind_clean$contig_ID, "ID" = wind_clean$ID, "avg_GC" = wind_clean$avg_GC, "avg_depth" = wind_clean$avg_depth, "E_rel" = wind_clean$E_rel, "total_avg_depth" = wind_clean$total_avg_depth,
+                                       "E_detect" = wind_clean$E_detect, "detection_status" = wind_clean$detection_status, "length" = wind_clean$length, "initial_avg_depth" = wind_clean$initial_avg_depth)
       }
       # Save the initial and corrected mapping results for later comparisons
       if (i == 1) {
@@ -534,7 +534,7 @@ quant_correction <- function(sample_name, descript, sliding_window_file, lengths
     bins <- data.frame(read.table(bin_assignment, header = TRUE, sep = "\t"))
     colnames(bins) <- c("contig_ID", "ID")
     
-    colnames(results) <- c("contig_ID", "R_G", "total_avg_depth", "R_G_cutoff", "detection_status")
+    colnames(results) <- c("contig_ID", "E_rel", "total_avg_depth", "E_detect", "detection_status")
     results <- merge(bins, results, by = "contig_ID")
     
     colnames(targets_list) <- c("contig_ID", "length")
@@ -546,9 +546,9 @@ quant_correction <- function(sample_name, descript, sliding_window_file, lengths
   if (!(is.na(bin_assignment))) {
     colnames(sliding_window) <- c("contig_ID", "avg_GC", "avg_depth")
     sliding_window <- merge(sliding_window, results, by = "contig_ID")
-    colnames(sliding_window) <- c("contig_ID", "avg_GC", "avg_depth", "ID", "R_G", "total_avg_depth", 
-                                  "R_G_cutoff", "detection_status", "length")
-    colnames(results) <- c("contig_ID", "ID", "R_G", "total_avg_depth", "R_G_cutoff", "detection_status", "length")
+    colnames(sliding_window) <- c("contig_ID", "avg_GC", "avg_depth", "ID", "E_rel", "total_avg_depth", 
+                                  "E_detect", "detection_status", "length")
+    colnames(results) <- c("contig_ID", "ID", "E_rel", "total_avg_depth", "E_detect", "detection_status", "length")
     temp <- aggregate(sliding_window[c("avg_depth")], sliding_window[c("ID")], FUN = function(x) mean(x))
     colnames(temp) <- c("ID", "total_avg_depth")
     sliding_window <- merge(sliding_window, temp, by = "ID")
@@ -557,9 +557,9 @@ quant_correction <- function(sample_name, descript, sliding_window_file, lengths
     results <- cbind.data.frame(results[,1:3], "total_avg_depth" = results$total_avg_depth.y, results[,5:7])
   } else {
     sliding_window <- merge(sliding_window, results, by = "ID")
-    colnames(sliding_window) <- c("ID", "avg_GC", "avg_depth", "R_G", "total_avg_depth", 
-                                "R_G_cutoff", "detection_status", "length")
-    colnames(results) <- c("ID", "R_G", "total_avg_depth", "R_G_cutoff", "detection_status", "length")
+    colnames(sliding_window) <- c("ID", "avg_GC", "avg_depth", "E_rel", "total_avg_depth", 
+                                "E_detect", "detection_status", "length")
+    colnames(results) <- c("ID", "E_rel", "total_avg_depth", "E_detect", "detection_status", "length")
   }
   
   ID_list <- data.frame(unique(results$ID))
@@ -595,11 +595,11 @@ quant_correction <- function(sample_name, descript, sliding_window_file, lengths
   results_v2$reliability <- "low conf/high error"
   results_v2$reliability[results_v2$RMSE <= results_v2$RMSE_limit] <- "high conf/low error"
   if (!(is.na(bin_assignment))) {
-    colnames(results_v2) <- c("ID", "contig_ID", "R_G", "gene_copies", "R_G_cutoff", 
+    colnames(results_v2) <- c("ID", "contig_ID", "E_rel", "gene_copies", "E_detect", 
                               "detection_status", "length", "RMSE", "RMSE_limit", "prev_RMSE", 
                               "frac_corrected", "correction_status", "reliability")
   } else {
-    colnames(results_v2) <- c("ID", "R_G", "gene_copies", "R_G_cutoff", 
+    colnames(results_v2) <- c("ID", "E_rel", "gene_copies", "E_detect", 
                               "detection_status", "length", "RMSE", "RMSE_limit", "prev_RMSE", 
                               "frac_corrected", "correction_status", "reliability")
   }
@@ -647,7 +647,7 @@ quant_unknown <- function(database_lengths, path_to_quant_regression, mapping_re
   # Assess which targets are above the detection threshold
   mapping <- detection_threshold(mapping_results, lengths)
   mapping[,2:4] <- lapply(mapping[,2:4], as.numeric)
-  mapping <- subset(mapping, R_G >= R_G_cutoff)
+  mapping <- subset(mapping, E_rel >= E_detect)
   
   # Detect and correct non-specific mapping
   if (nrow(mapping) != 0) {

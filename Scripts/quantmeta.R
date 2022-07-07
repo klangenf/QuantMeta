@@ -17,7 +17,7 @@
 
 # Regression: 
   # Detection threshold regression should be available in the Regressions/detection directory
-  # Regressions/detection/Langenfeld_2022_R_G_detect can be used unless more or less stringent detection
+  # Regressions/detection/Langenfeld_2022_E_detect can be used unless more or less stringent detection
   # thresholds are warranted. New detection thresholds can be created with confident_detection_regression_builder.R
 
 # Outputs will be saved to Results/{sample_name}
@@ -37,7 +37,7 @@ library(ggpmisc)
 
 ##### Determine coverage, average read depth (i.e. gene copies), and detection threshold parameters of the standards ##############################
 detection_threshold <- function(sample_name, mapping_results, target_length, detect_thresh) {
-  min_R_G <- readRDS(detect_thresh)
+  E_detect <- readRDS(detect_thresh)
   
   # make a list of the standards ID in the mapping file
   mapping_results <- as.data.frame(read.table(mapping_results, sep = "\t", header = TRUE, stringsAsFactors = FALSE))
@@ -47,7 +47,7 @@ detection_threshold <- function(sample_name, mapping_results, target_length, det
   targets$B_G <- 0
   targets$gene_copies <- 0
   targets$I_G <- 0
-  targets$R_G <- 0
+  targets$E_rel <- 0
 
   for(i in 1:nrow(targets)) {
     # select genome information on specific genome from mapping table
@@ -62,18 +62,18 @@ detection_threshold <- function(sample_name, mapping_results, target_length, det
     target$I_G_x <- (target$read_depth/targets$B_G[i])*log(target$read_depth/targets$B_G[i])
     targets$I_G[i] <- -sum(na.omit(target$I_G_x))
     
-    # Calculate R_G
-    targets$R_G[i] = targets$I_G[i]/log(targets$length[i])
+    # Calculate E_rel
+    targets$E_rel[i] = targets$I_G[i]/log(targets$length[i])
     
-    # Calculate R_G_cutoff
-    targets$R_G_cutoff[i] <- predict(min_R_G, newdata = targets[i,])
+    # Calculate E_detect
+    targets$E_detect[i] <- predict(E_detect, newdata = targets[i,])
   }
   
   targets$detection_status <- "not_detected"
-  targets$detection_status[targets$R_G >= targets$R_G_cutoff] <- "detected"
+  targets$detection_status[targets$E_rel >= targets$E_detect] <- "detected"
   
-  mapping_targets_analysis = cbind.data.frame(targets$ID, targets$R_G, targets$gene_copies, targets$R_G_cutoff, targets$detection_status)
-  colnames(mapping_targets_analysis) <- c("ID", "R_G", "gene_copies", "R_G_cutoff", "detection_status")
+  mapping_targets_analysis = cbind.data.frame(targets$ID, targets$E_rel, targets$gene_copies, targets$E_detect, targets$detection_status)
+  colnames(mapping_targets_analysis) <- c("ID", "E_rel", "gene_copies", "E_detect", "detection_status")
   
   output = "Mapping/sample/standards_mapping_analysis.txt"
   output = gsub("sample", sample_name, output)
@@ -170,8 +170,8 @@ quantmeta <- function(sample_name, STD_MIXES, mapping_results, DNA_input, DNA_co
   
   # assess which standards are above the detection threshold
   mapping <- detection_threshold(sample_name, mapping_results, std_length, detect_thresh)
-  mapping <- transform(mapping, R_G = as.numeric(as.character(R_G)), gene_copies = as.numeric(as.character(gene_copies)), R_G_cutoff = as.numeric(as.character(R_G_cutoff)))
-  mapping <- subset(mapping, R_G >= R_G_cutoff)
+  mapping <- transform(mapping, E_rel = as.numeric(as.character(E_rel)), gene_copies = as.numeric(as.character(gene_copies)), E_detect = as.numeric(as.character(E_detect)))
+  mapping <- subset(mapping, E_rel >= E_detect)
   
   # Read in mapping_output, add in 0 for sequins not in the metagenome
   dsDNA_mapping = subset(mapping, !(ID %in% ssDNA_STD_MIX$ID))

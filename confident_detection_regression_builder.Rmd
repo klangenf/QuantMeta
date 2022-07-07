@@ -4,7 +4,7 @@ Author: "Dr. Kathryn Langenfeld"
 Output: html_notebook
 ---
 
-Purpose: This R notebook is designed to develop a regression to determine the minimum R_G for confident detection with respect to a target's length. The regression from Langenfeld et al. (2022) may be adopted, but the minimum R_G is based on the standards proposed by FastViromeExplorer (Lithi et al. 2018) (10% read coverage and 0.3 observed/expected read distribution). If these parameters are deemed inappropriate for specific applications, it is recommended that new minimum R_G regressions be created for specific research needs.
+Purpose: This R notebook is designed to develop a regression to determine E_detect (minimum E_rel) for confident detection with respect to a target's length. The regression from Langenfeld et al. (2022) may be adopted, but the minimum E_rel is based on the standards proposed by FastViromeExplorer (Lithi et al. 2018) (10% read coverage and 0.3 observed/expected read distribution). If these parameters are deemed inappropriate for specific applications, it is recommended that new E_detect regressions be created for specific research needs.
 
 Load required R packages
 ```{r}
@@ -49,7 +49,7 @@ mapping_analysis <- function(sample_name, mapping_results, target_lengths, targe
   targets$B_G <- 0
   targets$gene_copies <- 0
   targets$I_G <- 0
-  targets$R_G <- 0
+  targets$E_rel <- 0
   targets$C_o <- 0
   targets$C_e <- 0
   targets$R_FVE <- 0
@@ -69,8 +69,8 @@ mapping_analysis <- function(sample_name, mapping_results, target_lengths, targe
     target$I_G_x <- (target$read_depth/targets$B_G[i])*log(target$read_depth/targets$B_G[i])
     targets$I_G[i] <- -sum(na.omit(target$I_G_x))
     
-    # Calculate R_G
-    targets$R_G[i] = targets$I_G[i]/log(targets$length[i])
+    # Calculate E_rel
+    targets$E_rel[i] = targets$I_G[i]/log(targets$length[i])
     
     # FastViromeExplorer LOD parameters
     targets$C_o[i] = targets$cover_count[i]/targets$length[i]
@@ -89,10 +89,10 @@ mapping_analysis <- function(sample_name, mapping_results, target_lengths, targe
     
   }
   
-  mapping_targets_logit = data.frame(cbind(targets$ID, targets$R_G, targets$LOD))
-  colnames(mapping_targets_logit) <- c("ID", "R_G", "LOD")
-  mapping_targets_analysis = data.frame(cbind(targets$ID, targets$R_G, targets$C_o, targets$R_FVE, targets$B_G, targets$gene_copies))
-  colnames(mapping_targets_analysis) <- c("ID", "R_G", "C_o", "R_FVE", "B_G", "gene_copies")
+  mapping_targets_logit = data.frame(cbind(targets$ID, targets$E_rel, targets$LOD))
+  colnames(mapping_targets_logit) <- c("ID", "E_rel", "LOD")
+  mapping_targets_analysis = data.frame(cbind(targets$ID, targets$E_rel, targets$C_o, targets$R_FVE, targets$B_G, targets$gene_copies))
+  colnames(mapping_targets_analysis) <- c("ID", "E_rel", "C_o", "R_FVE", "B_G", "gene_copies")
   
   output = "Regressions/detection/sample_db_mapping_analysis.txt"
   output = gsub("sample", sample_name, output)
@@ -157,7 +157,7 @@ for (i in 1:nrow(samples)) {
   results$downsample <- rep(samples$downsample[i])
   results$sample <- rep(samples$sample[i])
   all <- cbind.data.frame(all, results$gene_copies)
-  colnames(all) <- c("ID", "R_G", "LOD", "downsample", "sample", "gene_copies")
+  colnames(all) <- c("ID", "E_rel", "LOD", "downsample", "sample", "gene_copies")
     
   if (i == 1) {
     logit <- all
@@ -222,7 +222,7 @@ for (i in 1:nrow(fail_samples)) {
   results$fail_set <- rep(fail_samples$fail_set[i])
   results$sample <- rep(fail_samples$sample[i])
   all <- cbind.data.frame(all, results$gene_copies)
-  colnames(all) <- c("ID", "R_G", "LOD", "fail_set", "sample", "gene_copies")
+  colnames(all) <- c("ID", "E_rel", "LOD", "fail_set", "sample", "gene_copies")
     
   if (i == 1) {
     fail_logit <- all
@@ -249,7 +249,7 @@ mapping_results <- rbind.data.frame(mapping_results, fail_mapping_results)
 
 ### Generate logistic regression model based on the results of the standard datasets
 ```{r}
-standards.lr <- glm(LOD ~ R_G, data = logit, family = binomial(link = "logit"))
+standards.lr <- glm(LOD ~ E_rel, data = logit, family = binomial(link = "logit"))
 ```
 
 ### Import test dataset(s)
@@ -289,7 +289,7 @@ for (j in databases) {
     results$downsample <- rep(samples$downsample[i])
     results$sample <- rep(samples$sample[i])
     all <- cbind.data.frame(all, results$gene_copies)
-    colnames(all) <- c("ID", "R_G", "LOD", "downsample", "sample", "gene_copies")
+    colnames(all) <- c("ID", "E_rel", "LOD", "downsample", "sample", "gene_copies")
     
     if (i == 1) {
       db_logit <- all
@@ -327,7 +327,7 @@ for (j in databases) {
 ```{r}
 logreg_assess <- function(test_data, sample_name) {
   assessment <- data.frame(sample_name)
-  cp <- cutpointr(test_data, R_G, above_LOD, method = maximize_boot_metric, metric = sum_sens_spec)
+  cp <- cutpointr(test_data, E_rel, above_LOD, method = maximize_boot_metric, metric = sum_sens_spec)
   assessment$ROC_AUC = cp$AUC
   assessment$optimal_cutpoint = cp$optimal_cutpoint
   colnames(assessment) <- c("sample", "ROC_AUC", "optimal_cutpoint")
@@ -335,7 +335,7 @@ logreg_assess <- function(test_data, sample_name) {
 }
 ```
 
-### Bin the database mapping results by the target length, then determine the optimal R_G cutpoint for each length bin to set as the optimal detection threshold
+### Bin the database mapping results by the target length, then determine the optimal E_rel cutpoint for each length bin to set as the optimal detection threshold
 The length bins are currently relevant for individual genes and virus genomes.
 The bins should be updated if longer sequences, such as prokaryote genomes, are being assessed in metagenomes.
 ```{r}
@@ -371,7 +371,7 @@ for (i in 1:(nrow(length_bins)+1)) {
   }
 }
 
-colnames(results_lengths) <- c("sample", "AUC", "R_G")
+colnames(results_lengths) <- c("sample", "AUC", "E_rel")
 results_lengths$fit <- 0
 results_lengths$se.fit <- 0
 results_lengths$residual.scale <- 0
@@ -419,11 +419,11 @@ colnames(results_lengths) <- c("length bin", "AUC", "target_cutpoint", "fit", "s
 # Update forula to match the section above 
 my.formula <- target_cutpoint ~ log10(log10(log10(length)))
 
-# save the linear model results to min_R_G
-min_R_G <- lm(my.formula, results_lengths)
+# save the linear model results to min_E_rel
+E_detect <- lm(my.formula, results_lengths)
 
 # save the linear model to the Regressions/detection directory
-saveRDS(min_R_G, file = "Regressions/detection/detection_threshold")
+saveRDS(E_detect, file = "Regressions/detection/detection_threshold")
 ```
 
-### Update the Snakefile_quant_unknown and Snakefile_quantmeta files to include this min_R_G threshold
+### Update the Snakefile_quant_unknown and Snakefile_quantmeta files to include this E_detect threshold

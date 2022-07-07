@@ -107,7 +107,7 @@ rule quantmeta_unknowns:
         sample="{sample}",
         descript="{target}",
         type="database", # type should be database if mapping reads to any sequence from a database of previous sequencing, change to contigs or MAGs if mapping reads to a sequence derived from the samples
-        detect_regression="Regressions/detection/Langenfeld_2022_R_G_detect", # Update with different R_G_detect if applicable
+        detect_regression="Regressions/detection/Langenfeld_2022_E_detect", # Update with different E_detect if applicable
         read_var_regression_1="Regressions/read_depth_variability/Langenfeld_2022_0to10readsperbp", # Update with sample-set specific regression    
        	read_var_regression_2="Regressions/read_depth_variability/Langenfeld_2022_10to100readsperbp", # Update with sample-set specific regression
        	read_var_regression_3="Regressions/read_depth_variability/Langenfeld_2022_100to1000readsperbp", # Update with sample-set specific regression
