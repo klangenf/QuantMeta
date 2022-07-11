@@ -3,7 +3,7 @@ QuantMeta uses the results of sequencing metagenomes spiked with known concentra
 
 See more details in the publication. The pipeline was developed using a set of 86 dsDNA standards developed by Hardwick et al. (2018) complimented with a set of 5 ssDNA standards. However, the pipeline allows the spike-in standards to be amended based on the users selected standards.
 
-Please cite our work: ... 
+Please cite our work: Langenfeld K, Hegarty B, Vidaurri S, Crossette E, Duhaime MB, Wigginton K. Evaluating limitations of quantitative metagenomics with synthetic dsDNA and ssDNA standards. bioRxiv. 2022:2022.07.08.499345.
 
 # Installation
 QuantMeta has several steps that run with snakemake. Snakemake will automatically install dependencies for each step using conda. However, the user must first set up snakemake. We recommend setting mamba has your base installer. Additional details on snakemake installation may be found at https://snakemake.readthedocs.io/en/stable/getting_started/installation.html. 
