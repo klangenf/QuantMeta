@@ -102,7 +102,7 @@ rule quantmeta_unknowns:
         mapping="Mapping/{sample}/{target}_mapping.txt",
         windows="Mapping/{sample}/{target}_window49.txt",
         regression="Regressions/quantification/Langenfeld_2022_rel_to_abs", # If using separate regressions for each sample, update this field to include the {sample} wildcard
-        bin_assign= "NA" ### Update to a file binning contigs. The file should be a tab separated file with two columns: "contig_ID" and "ID" where "contig_ID" provides unique identifiers for each contig and "ID" is the respective bin name for the contig
+        #bin_assign= "NA" ### Update to a file binning contigs and remove "#". The file should be a tab separated file with two columns: "contig_ID" and "ID" where "contig_ID" provides unique identifiers for each contig and "ID" is the respective bin name for the contig
     params:
         sample="{sample}",
         descript="{target}",
