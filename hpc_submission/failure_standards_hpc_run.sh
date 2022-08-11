@@ -49,5 +49,5 @@ fi
 #####################
 
 # Initiating snakemake and running workflow in cluster mode
-PATH='/home/klangenf/anaconda/envs' ### Update to user specific anaconda environment locations
-snakemake --profile Config --latency-wait 300 --use-conda --conda-prefix $PATH --conda-frontend mamba --snakefile Snakefile-failure_standards
+DIR='/home/klangenf/anaconda/envs' ### Update to user specific anaconda environment locations
+snakemake --profile Config --latency-wait 300 --use-conda --conda-prefix $DIR --conda-frontend mamba --snakefile Snakefile-failure_standards
