@@ -131,12 +131,14 @@ rule depth_bam:
 rule organize:
     input:
         "Mapping/{sample}/{fail_set}/fail_standards_depth.txt"
-    conda:
-        "Envs/R.yaml"
+    params:
+        "Map_Indexes/{fail_set}/fail_standards.fasta"
     output:
         "Mapping/{sample}/{fail_set}_mapping.txt"
-    script:
-        "Scripts/organize_mapping.R"
+    shell:
+        """
+        python3 Scripts/organize_mapping.py -d {input} -f {params} -o {output}
+        """
 
 
 

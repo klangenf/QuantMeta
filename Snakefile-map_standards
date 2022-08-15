@@ -74,12 +74,14 @@ rule depth_bam:
 rule organize:
     input:
         "Mapping/{sample}/standards_depth.txt"
-    conda:
-        "Envs/R.yaml"
+    params:
+        "Map_Indexes/Langenfeld_2022_standards.fasta" ### Update with fasta file of spike-in standards
     output:
         "Mapping/{sample}/standards_mapping.txt"
     script:
-        "Scripts/organize_mapping.R"
+        """
+        python3 Scripts/organize_mapping.py -d {input} -f {params} -d {output}
+        """
 
 rule sliding_window:
     input:
