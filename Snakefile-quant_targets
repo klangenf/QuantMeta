@@ -77,12 +77,12 @@ rule organize:
         "Mapping/{sample}/{target}_depth.txt"
     params:
         "Map_Indexes/{target}.fasta"
-    conda:
-        "Envs/R.yaml"
     output:
         "Mapping/{sample}/{target}_mapping.txt"
     script:
-        "Scripts/organize_mapping.R"
+        """
+        python3 Scripts/organize_mapping.py -d {input} -f {params} -o {output}
+        """
 
 rule sliding_window:
     input:

@@ -16,7 +16,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=2000mb
-#SBATCH --time=02:00:00
+#SBATCH --time=03:00:00
 
 # Account
 #SBATCH --account=duhaimem1 ###Update to hpc specifications

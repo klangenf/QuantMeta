@@ -48,7 +48,7 @@ depth_bam:
 organize:
   cpuspertask: 3
   mempercpu: "30g"
-  time: "2-00:00:00"
+  time: "01:00:00"
 
 quant_meta:
   cpuspertask: 2
