@@ -163,6 +163,9 @@ quantmeta <- function(sample_name, STD_MIXES, mapping_results, DNA_input, DNA_co
     colnames(ssDNA_STD_MIX) <- c("ID", "length", "Mass", "MIX")
     ssDNA_STD_MIX <- na.omit(ssDNA_STD_MIX)
     STD_MIX <- rbind.data.frame(STD_MIX, ssDNA_STD_MIX)
+  } else {
+    ssDNA_STD_MIX <- data.frame(matrix(ncol=4, nrow=0))
+    colnames(ssDNA_STD_MIX) <- c("ID", "length", "Mass", "MIX")
   }
   
   std_length <- cbind.data.frame(STD_MIX$ID, STD_MIX$length)
