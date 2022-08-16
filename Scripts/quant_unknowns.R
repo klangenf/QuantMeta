@@ -652,10 +652,11 @@ quant_unknown <- function(database_lengths, path_to_quant_regression, mapping_re
   # Detect and correct non-specific mapping
   if (nrow(mapping) != 0) {
     mapping <- quant_correction(sample_name, descript, sliding_window_file, lengths, mapping, bin_assignment, target_type)
+    
+    # Remove targets that are not quantifiable (correction_status == "error_no convergence" or "error_high fraction corrected)
+    mapping <- subset(mapping, !(correction_status %in% c("error_no convergence", "error_high fraction corrected")))
   } 
   
-  # Remove targets that are not quantifiable (correction_status == "error_no convergence" or "error_high fraction corrected)
-  mapping <- subset(mapping, correction_status %in% c("error_no convergence", "error_high fraction corrected"))
   
   # Convert targets' relative abundances to units of (gene copies/ng DNA)
   results <- prediction(mapping, DNA_input, DNA_conc, target_type)
