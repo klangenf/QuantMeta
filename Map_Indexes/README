@@ -3,7 +3,7 @@
 (2) Create files listing the length of each contig. 
     
     This can be created by loading bioawk and running:
-         bioawk -c fastx '{ print $name, length($seq) }' < {target}.fasta > {target}_length.txt
+         bioawk -c fastx '{ print $name, length($seq) }' < {target}.fasta > {target}_lengths.txt
 
 (3) Create bowtie2 indexes in this folder.
     
