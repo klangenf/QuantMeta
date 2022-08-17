@@ -655,6 +655,10 @@ quant_unknown <- function(database_lengths, path_to_quant_regression, mapping_re
     
     # Remove targets that are not quantifiable (correction_status == "error_no convergence" or "error_high fraction corrected)
     mapping <- subset(mapping, !(correction_status %in% c("error_no convergence", "error_high fraction corrected")))
+  } else {
+    temp <- "No targets above detection!"
+    write.table(temp, snakemake@output[[4]], row.names = FALSE, col.names = FALSE)
+    write.table(temp, snakemake@output[[2]], row.names = FALSE, col.names = FALSE)
   } 
   
   
