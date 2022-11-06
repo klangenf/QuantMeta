@@ -68,7 +68,7 @@ ln -s {location of qc read fastq file} {sample_id}.fastq
 ```
 conda activate bioawk
 cd Map_Indexes
-bioawk -c fastx '{ print $name, length($seq) }' < {target}.fasta > {target}_length.txt
+bioawk -c fastx '{ print $name, length($seq) }' < {target}.fasta > {target}_lengths.txt
 conda deactivate
 conda activate bowtie2
 bowtie2-build {target}.fasta {target}
