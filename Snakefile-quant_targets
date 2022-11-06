@@ -79,7 +79,7 @@ rule organize:
         "Map_Indexes/{target}.fasta"
     output:
         "Mapping/{sample}/{target}_mapping.txt"
-    script:
+    shell:
         """
         python3 Scripts/organize_mapping.py -d {input} -f {params} -o {output}
         """
