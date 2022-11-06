@@ -80,7 +80,7 @@ rule organize:
         "Mapping/{sample}/standards_mapping.txt"
     script:
         """
-        python3 Scripts/organize_mapping.py -d {input} -f {params} -d {output}
+        python3 Scripts/organize_mapping.py -d {input} -f {params} -o {output}
         """
 
 rule sliding_window:
