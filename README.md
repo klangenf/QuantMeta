@@ -262,5 +262,14 @@ The read depth variability regressions and RMSE thresholds may be specific to th
   ```
   snakemake -prn -s Snakefile-quant_targets --unlock
   ```
+- NOTE: If you performed step 5 to create new quantification correction regression and the >1,000 reads/bp regression is not a constant value as was the case in Langenfeld et al. 2022, you will need to run a different quantification script. From the QuantMeta directory:
+  ```
+  conda activate snakemake
+  sbatch hpc_submission/quant_targets_all_linear_regs_hpc_run.sh
+  ```
+  *Optional:* If your jobs fail for any reason, snakemake will need to be unlocked prior to rerunning. This can be completed with:
+  ```
+  snakemake -prn -s Snakefile-quant_targets_all_linear_regs --unlock
+  ```
 
 
