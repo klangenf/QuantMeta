@@ -1,0 +1,127 @@
+# Map reads to databases with bowtie2
+
+#to run snakemake: conda activate snakemake
+
+#set a workflow config file
+configfile: "Config/config_example_samples.yaml" ### Update with your config file
+SAMPLE = config["sample"] ### Update with your specific sample name
+
+#if want to run on just some files
+#SAMPLE = ["SPECIFIC_SAMPLE"] ### Update and remove "#" and add a # to the SAMPLE = config["sample"] line above
+
+TARGET = ["HM1"] ### Update with your target(s) for mapping reads to
+### MUST update rule quant_unknowns with your rel_to_abs regression(s) -- collective of all samples is recommended, if sample specific, add in {sample} wildcard to rule quantmeta_unknowns
+
+rule all_bowtie:
+    input:
+        expand("Results/{samp}/{targ}_results.txt", samp=SAMPLE, targ=TARGET) 
+
+# Bowtie2 mapping 
+
+rule bowtie:
+    input:
+        R1_reads="Reads/{sample}_R1.fastq",
+        R2_reads="Reads/{sample}_R2.fastq"
+    params:
+        "Map_Indexes/{target}"
+    conda:
+        "Envs/bowtie2.yaml"
+    output:
+        "Mapping/{sample}/{target}_mapping.sam"
+    shell:
+        """
+        bowtie2 -x {params} -q -1 {input.R1_reads} -2 {input.R2_reads} -S {output} 
+        """
+
+rule sam_to_bam:
+    input:
+        "Mapping/{sample}/{target}_mapping.sam"
+    conda:
+        "Envs/bowtie2.yaml"
+    output:
+        "Mapping/{sample}/{target}_mapping.bam"
+    shell:
+        """
+        samtools view -S -b {input} > {output}
+        """
+
+rule sort_bam:
+    input:
+        "Mapping/{sample}/{target}_mapping.bam"
+    conda:
+        "Envs/bowtie2.yaml"
+    output:
+        "Mapping/{sample}/{target}_mapping.sorted.bam"
+    shell:
+        """
+        samtools sort {input} -o {output}
+        samtools index {output}
+        """
+
+rule depth_bam:
+    input:
+        "Mapping/{sample}/{target}_mapping.sorted.bam"
+    params:
+        "Map_Indexes/{target}.fasta"
+    conda:
+        "Envs/bowtie2.yaml"
+    output:
+        "Mapping/{sample}/{target}_depth.txt"
+    shell:
+        """
+        samtools depth -a -H {input} --reference {params} > {output}
+        """
+
+rule organize:
+    input:
+        "Mapping/{sample}/{target}_depth.txt"
+    params:
+        "Map_Indexes/{target}.fasta"
+    output:
+        "Mapping/{sample}/{target}_mapping.txt"
+    shell:
+        """
+        python3 Scripts/organize_mapping.py -d {input} -f {params} -o {output}
+        """
+
+rule sliding_window:
+    input:
+        "Mapping/{sample}/{target}_mapping.txt"
+    output:
+        "Mapping/{sample}/{target}_window49.txt"
+    shell:
+        """
+        python3 Scripts/sliding_window.py -m {input} -o {output}
+        """
+
+rule quantmeta_unknowns:
+    input:
+        sample_info="Spike-ins/example_sample_info.txt", ### Update with your specific file
+        char="Sample_Characteristics/example_sample_extraction_info.txt", ### Update with your specific file
+        length="Map_Indexes/{target}_lengths.txt",
+        mapping="Mapping/{sample}/{target}_mapping.txt",
+        windows="Mapping/{sample}/{target}_window49.txt",
+        regression="Regressions/quantification/Langenfeld_2022_rel_to_abs", # If using separate regressions for each sample, update this field to include the {sample} wildcard
+        #bin_assign= "NA" ### Update to a file binning contigs and remove "#". The file should be a tab separated file with two columns: "contig_ID" and "ID" where "contig_ID" provides unique identifiers for each contig and "ID" is the respective bin name for the contig
+    params:
+        sample="{sample}",
+        descript="{target}",
+        type="database", # type should be database if mapping reads to any sequence from a database of previous sequencing, change to contigs or MAGs if mapping reads to a sequence derived from the samples
+        detect_regression="Regressions/detection/Langenfeld_2022_E_detect", # Update with different E_detect if applicable
+        read_var_regression_1="Regressions/read_depth_variability/Langenfeld_2022_0to10readsperbp", # Update with sample-set specific regression    
+       	read_var_regression_2="Regressions/read_depth_variability/Langenfeld_2022_10to100readsperbp", # Update with sample-set specific regression
+       	read_var_regression_3="Regressions/read_depth_variability/Langenfeld_2022_100to1000readsperbp", # Update with sample-set specific regression
+       	read_var_regression_4="Regressions/read_depth_variability/Langenfeld_2022_gte1000readsperbp", # Update with sample-set specific regression
+        thresh_var_regression_1="Regressions/threshold_read_depth_variability/Langenfeld_2022_0to10readsperbp", # Update with sample-set specific threshold regression
+        thresh_var_regression_2="Regressions/threshold_read_depth_variability/Langenfeld_2022_10to100readsperbp", # Update with sample-set specific threshold regression
+        thresh_var_regression_3="Regressions/threshold_read_depth_variability/Langenfeld_2022_100to1000readsperbp", # Update with sample-set specific threshold regression
+        thresh_var_regression_4="Regressions/threshold_read_depth_variability/Langenfeld_2022_gte1000readsperbp" # Update with sample-set specific threshold regression
+    conda:
+        "Envs/R.yaml"
+    output:
+        results="Results/{sample}/{target}_results.txt",
+        quant_correct="Results/{sample}/{target}_quant_correct.txt",
+        mapping_analysis="Results/{sample}/{target}_mapping_analysis.txt",
+        correct_window49="Mapping/{sample}/{target}_window49_corrected.txt"
+    script:
+        "Scripts/quant_unknowns_all_linear_regs.R"
