@@ -179,7 +179,7 @@ The provided entropy-based detection threshold was created based on a minimum co
   ```
   snakemake -prn -s Snakefile-failure_standards --unlock
   ```
-### 3.5 Follow the instructions in the **confident_detection_regression_builder.Rmd** R notebook.
+#### 3.5 Follow the instructions in the **confident_detection_regression_builder.Rmd** R notebook.
 ### 4. Relate relative to absolute abundances of standards in a linear regression
 #### 4.1 Each step of this process is performed by running “Snakefile-quantmeta”
 - Update “Snakefile-quantmeta” based on your samples
