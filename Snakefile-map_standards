@@ -78,7 +78,7 @@ rule organize:
         "Map_Indexes/Langenfeld_2022_standards.fasta" ### Update with fasta file of spike-in standards
     output:
         "Mapping/{sample}/standards_mapping.txt"
-    script:
+    shell:
         """
         python3 Scripts/organize_mapping.py -d {input} -f {params} -o {output}
         """
