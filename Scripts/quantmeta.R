@@ -180,7 +180,7 @@ quantmeta <- function(sample_name, STD_MIXES, mapping_results, DNA_input, DNA_co
   dsDNA_mapping = subset(mapping, !(ID %in% ssDNA_STD_MIX$ID))
   
   # Calculate the known spike-in concentration for each standard (gene copies/ng DNA)
-  if (file.size(PCR_quant_file)==0) {
+  if (file.size(PCR_quant_file)<500) {
     results <- expected_conc(subset(STD_MIX, !(ID %in% ssDNA_STD_MIX$ID)), sequins_spike, DNA_conc)
   } else {
     # column 1: list of IDs (ID), column 2: list of standard concentrations in the DNA extract (known_conc)
