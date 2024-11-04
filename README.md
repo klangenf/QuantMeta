@@ -1,12 +1,12 @@
 # QuantMeta
-QuantMeta uses the results of sequencing metagenomes spiked with known concentrations of standards to determine the absolute abundance of target genes, genomes, or contigs within metagenomes. The pipeline provides a method for applying rigorous quantitative limitations to potential targets to improve the detection confidence and quantification accuracy.
+QuantMeta determines the absolute abundance of targets in metagenomes spiked with synthetic DNA standards. The pipeline incorporates (1) detection thresholds (acting similarly to limit of detection) to determine presence or absence of targets, (2) identification and correction of read mapping errors that affect accuracy of quantification, and (3) determination of absolute abundance of targets.
 
-See more details in the publication. The pipeline was developed using a set of 86 dsDNA standards developed by Hardwick et al. (2018) complimented with a set of 5 ssDNA standards. However, the pipeline allows the spike-in standards to be amended based on the users selected standards.
+See more details in Langenfeld et al. (2025). The pipeline was developed using a set of 86 dsDNA standards developed by Hardwick et al. (2018) complimented with a set of 5 ssDNA standards. However, the pipeline allows the user to define spike-in standards for applicability to both viral and entire microbial community metagenomes.
 
-Please cite our work: Langenfeld K, Hegarty B, Vidaurri S, Crossette E, Duhaime MB, Wigginton K. A quantitative metagenomic approach to determine population concentrations with examination of quantitative limitations. bioRxiv. doi.org/10.1101/2022.07.08.499345.
+Please cite our work: Langenfeld K, Hegarty B, Vidaurri S, Crossette E, Duhaime MB, Wigginton K. Development of a quantitative metagenomic approach to establish quantitative limits and its application to viruses. bioRxiv. doi.org/10.1101/2022.07.08.499345.
 
 # Installation
-QuantMeta has several steps that run with snakemake. Snakemake will automatically install dependencies for each step using conda. However, the user must first set up snakemake. We recommend setting mamba has your base installer. Additional details on snakemake installation may be found at https://snakemake.readthedocs.io/en/stable/getting_started/installation.html. 
+QuantMeta has several steps that run with snakemake; therefore, snakemake installation is required prior to running QuantMeta. Snakemake will automatically install dependencies for each step using conda. We recommend setting mamba has your base installer. Additional details on snakemake installation may be found at https://snakemake.readthedocs.io/en/stable/getting_started/installation.html. 
 
 ```
 conda install -n base -c conda-forge mamba
@@ -156,7 +156,7 @@ The provided entropy-based detection threshold was created based on a minimum co
   - Update SAMPLE wildcard to reflect your sample variable name (if changed from sample)
     - *Line 7* ```SAMPLE = config[“{your variable}”]```
     - OR if running Snakefile-map_standards on a subset of samples, update *Line 10* ```SAMPLE = [“{your specific sample name}”, “{another specific sample name}”]```
-  - If using a different set of spike-in standards than Langenfeld et al. (2022), update the Snakefile to use the other bowtie indexes and .fasta file in Map-Indexes directory
+  - If using a different set of spike-in standards than Langenfeld et al. (2025), update the Snakefile to use the other bowtie indexes and .fasta file in Map-Indexes directory
     - *Line 12* ```STANDARDS = ["Map_Indexes/{your standards index name}”]```
     - *Line 26* ```“Map_Indexes/{your standards fasta name}.fasta"```
 - Update “hpc_submission/failure_standards_hpc_run.sh” to represent your system configuration
@@ -215,7 +215,7 @@ The provided entropy-based detection threshold was created based on a minimum co
   snakemake -prn -s Snakefile-quantmeta --unlock
   ```
 ### 5. *Optional:* Determine sequencing specific parameters for quantification correction
-The read depth variability regressions and RMSE thresholds may be specific to the sequencing technologies used in Langenfeld et al. (2022) where sequencing was performed with Illumina NovaSeq SP flow cells creating 251-bp paired-end reads with Swift 1S Plus library preparations. If different sequencing technologies were used, we recommend creating new read depth variability regressions and assessing RMSE thresholds.
+The read depth variability regressions and RMSE thresholds may be specific to the sequencing technologies used in Langenfeld et al. (2025) where sequencing was performed with Illumina NovaSeq SP flow cells creating 251-bp paired-end reads with Swift 1S Plus library preparations. If different sequencing technologies were used, we recommend creating new read depth variability regressions and assessing RMSE thresholds.
   - Follow instructions in the **quant_correct_regression_builder.Rmd** R notebook.
 ### 6. Quantify target genes, genomes, or contigs
 #### 6.1 Each step of this process is performed by running “Snakefile-quant_targets”
@@ -262,7 +262,7 @@ The read depth variability regressions and RMSE thresholds may be specific to th
   ```
   snakemake -prn -s Snakefile-quant_targets --unlock
   ```
-- NOTE: If you performed step 5 to create new quantification correction regression and the >1,000 reads/bp regression is not a constant value as was the case in Langenfeld et al. 2022, you will need to run a different quantification script. From the QuantMeta directory:
+- NOTE: If you performed step 5 to create new quantification correction regression and the >1,000 reads/bp regression is not a constant value as was the case in Langenfeld et al. 2025, you will need to run a different quantification script. From the QuantMeta directory:
   ```
   conda activate snakemake
   sbatch hpc_submission/quant_targets_all_linear_regs_hpc_run.sh
