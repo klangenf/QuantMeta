@@ -101,21 +101,21 @@ rule quantmeta_unknowns:
         length="Map_Indexes/{target}_lengths.txt",
         mapping="Mapping/{sample}/{target}_mapping.txt",
         windows="Mapping/{sample}/{target}_window49.txt",
-        regression="Regressions/quantification/Langenfeld_2022_rel_to_abs", # If using separate regressions for each sample, update this field to include the {sample} wildcard
+        regression="Regressions/quantification/Langenfeld_2024_rel_to_abs", # If using separate regressions for each sample, update this field to include the {sample} wildcard
         #bin_assign= "NA" ### Update to a file binning contigs and remove "#". The file should be a tab separated file with two columns: "contig_ID" and "ID" where "contig_ID" provides unique identifiers for each contig and "ID" is the respective bin name for the contig
     params:
         sample="{sample}",
         descript="{target}",
         type="database", # type should be database if mapping reads to any sequence from a database of previous sequencing, change to contigs or MAGs if mapping reads to a sequence derived from the samples
-        detect_regression="Regressions/detection/Langenfeld_2022_E_detect", # Update with different E_detect if applicable
-        read_var_regression_1="Regressions/read_depth_variability/Langenfeld_2022_0to10readsperbp", # Update with sample-set specific regression    
-       	read_var_regression_2="Regressions/read_depth_variability/Langenfeld_2022_10to100readsperbp", # Update with sample-set specific regression
-       	read_var_regression_3="Regressions/read_depth_variability/Langenfeld_2022_100to1000readsperbp", # Update with sample-set specific regression
-       	read_var_regression_4="Regressions/read_depth_variability/Langenfeld_2022_gte1000readsperbp", # Update with sample-set specific regression
-        thresh_var_regression_1="Regressions/threshold_read_depth_variability/Langenfeld_2022_0to10readsperbp", # Update with sample-set specific threshold regression
-        thresh_var_regression_2="Regressions/threshold_read_depth_variability/Langenfeld_2022_10to100readsperbp", # Update with sample-set specific threshold regression
-        thresh_var_regression_3="Regressions/threshold_read_depth_variability/Langenfeld_2022_100to1000readsperbp", # Update with sample-set specific threshold regression
-        thresh_var_regression_4="Regressions/threshold_read_depth_variability/Langenfeld_2022_gte1000readsperbp" # Update with sample-set specific threshold regression
+        detect_regression="Regressions/detection/Langenfeld_2024_E_detect", # Update with different E_detect if applicable
+        read_var_regression_1="Regressions/read_depth_variability/Langenfeld_2024_0to10readsperbp", # Update with sample-set specific regression    
+       	read_var_regression_2="Regressions/read_depth_variability/Langenfeld_2024_10to100readsperbp", # Update with sample-set specific regression
+       	read_var_regression_3="Regressions/read_depth_variability/Langenfeld_2024_100to1000readsperbp", # Update with sample-set specific regression
+       	read_var_regression_4="Regressions/read_depth_variability/Langenfeld_2024_gte1000readsperbp", # Update with sample-set specific regression
+        thresh_var_regression_1="Regressions/threshold_read_depth_variability/Langenfeld_2024_0to10readsperbp", # Update with sample-set specific threshold regression
+        thresh_var_regression_2="Regressions/threshold_read_depth_variability/Langenfeld_2024_10to100readsperbp", # Update with sample-set specific threshold regression
+        thresh_var_regression_3="Regressions/threshold_read_depth_variability/Langenfeld_2024_100to1000readsperbp", # Update with sample-set specific threshold regression
+        thresh_var_regression_4="Regressions/threshold_read_depth_variability/Langenfeld_2024_gte1000readsperbp" # Update with sample-set specific threshold regression
     conda:
         "Envs/R.yaml"
     output:
