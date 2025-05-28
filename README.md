@@ -27,10 +27,10 @@ Conda environments for dependencies can be created from the QuantMeta directory 
 - Create a sample list file using the same format as config_example_samples.yaml. Format:
 ```
 samples:
-    sample_name_1
-    sample_name_2
+    sample_name_1:
+    sample_name_2:
     ...
-    sample_name_x
+    sample_name_x:
 ```
 - Update cluster.yaml with your account and email information. If jobs fail due to memory errors or wall time limitations, the run allocations can be updated in the cluster.yaml script.
 #### 1.2 Configure Reads directory by adding symbolic links to the quality controlled fastq files.
@@ -51,7 +51,7 @@ ln -s {location of qc read fastq file} {sample_id}.fastq
     - "dsDNA_spike": dsDNA standards fraction of total DNA mass
     - "ssDNA": "YES" if ssDNA standards were spiked in, otherwise "NO"
     - "ssDNA_spike": ssDNA standards fraction of total DNA mass
-    - "downsample": percent downsampling (if no downsampling was performed use 100)
+    - "downsample": percent downsampling or subsampling from the read fastq files (if no downsampling was performed use 100)
     - "DNA_conc": concentration of DNA in the DNA extract (ng/µL)
 ```
 "Sample"	"mapping_loc"	"lib_mass"	"mix"	"dsDNA_spike"	"ssDNA"	"ssDNA_spike"	"downsample"	"DNA_conc"
@@ -107,12 +107,12 @@ bioawk -c fastx '{ print $name, length($seq) }' < {sample_id}.fasta > {sample_id
 - *Optional:* We recommend performing a dry run prior to job submission to the hpc from the QuantMeta directory.
   ```
   conda activate snakemake
-  snakemake -prn -s Snakefile-map_standards
+  snakemake -pn -s Snakefile-map_standards
   ```
   Check that all expected rules and number of executions are listed in DAG of jobs snakemake prints out.
 - *Optional:* If your jobs fail for any reason, snakemake will need to be unlocked prior to rerunning. This can be completed with:
   ```
-  snakemake -prn -s Snakefile-map_standards --unlock
+  snakemake -pn -s Snakefile-map_standards --unlock
   ```
 ### 3. *Optional:* Determine detection threshold
 The provided entropy-based detection threshold was created based on a minimum coverage of 10% and read distribution of 0.3 (ratio of observed read distribution to Poisson distribution of reads). If this threshold is deemed inadequate for your analysis needs, a new detection threshold may be created. The following is the list of steps to create a new detection threshold.
@@ -142,12 +142,12 @@ The provided entropy-based detection threshold was created based on a minimum co
 - *Optional:* We recommend performing a dry run prior to job submission to the hpc from the QuantMeta directory.
   ```
   conda activate snakemake
-  snakemake -prn -s Snakefile-downsample
+  snakemake -pn -s Snakefile-downsample
   ```
   Check that all expected rules and number of executions are listed in DAG of jobs snakemake prints out.
 - *Optional:* If your jobs fail for any reason, snakemake will need to be unlocked prior to rerunning. This can be completed with:
   ```
-  snakemake -prn -s Snakefile-downsample --unlock
+  snakemake -pn -s Snakefile-downsample --unlock
   ```
 #### 3.3 Create a “failure” set of standards and map reads to the standard sequences
 - Update “Snakefile-failure_standards” based on your samples
@@ -172,12 +172,12 @@ The provided entropy-based detection threshold was created based on a minimum co
 - *Optional:* We recommend performing a dry run prior to job submission to the hpc from the QuantMeta directory.
   ```
   conda activate snakemake
-  snakemake -prn -s Snakefile-failure_standards
+  snakemake -pn -s Snakefile-failure_standards
   ```
   Check that all expected rules and number of executions are listed in DAG of jobs snakemake prints out.
 - *Optional:* If your jobs fail for any reason, snakemake will need to be unlocked prior to rerunning. This can be completed with:
   ```
-  snakemake -prn -s Snakefile-failure_standards --unlock
+  snakemake -pn -s Snakefile-failure_standards --unlock
   ```
 #### 3.5 Follow the instructions in the **confident_detection_regression_builder.Rmd** R notebook.
 ### 4. Relate relative to absolute abundances of standards in a linear regression
@@ -255,12 +255,12 @@ The read depth variability regressions and RMSE thresholds may be specific to th
 - *Optional:* We recommend performing a dry run prior to job submission to the hpc from the QuantMeta directory.
   ```
   conda activate snakemake
-  snakemake -prn -s Snakefile-quant_targets
+  snakemake -pn -s Snakefile-quant_targets
   ```
   Check that all expected rules and number of executions are listed in DAG of jobs snakemake prints out.
 - *Optional:* If your jobs fail for any reason, snakemake will need to be unlocked prior to rerunning. This can be completed with:
   ```
-  snakemake -prn -s Snakefile-quant_targets --unlock
+  snakemake -pn -s Snakefile-quant_targets --unlock
   ```
 - NOTE: If you performed step 5 to create new quantification correction regression and the >1,000 reads/bp regression is not a constant value as was the case in Langenfeld et al. 2025, you will need to run a different quantification script. From the QuantMeta directory:
   ```
@@ -269,7 +269,7 @@ The read depth variability regressions and RMSE thresholds may be specific to th
   ```
   *Optional:* If your jobs fail for any reason, snakemake will need to be unlocked prior to rerunning. This can be completed with:
   ```
-  snakemake -prn -s Snakefile-quant_targets_all_linear_regs --unlock
+  snakemake -pn -s Snakefile-quant_targets_all_linear_regs --unlock
   ```
 
 
