@@ -2,4 +2,4 @@
 
 (2) Provide ddPCR measurements of each spiked-in standard (if applicable) in the same format as example_stds_ddPCR_conc.txt template
 
-(3) Check that STD_MIXES.txt includes all relevant spiked-in standard mixes, adjust by adding or removing information as necessary for your particular samples.
+(3) Check that STD_MIXES.txt includes all relevant spiked-in standard mixes, adjust by adding or removing information as necessary for your particular samples. The "MIX_A", "MIX_B", or "MIX_C" columns report the fraction of each standard in the mix (each column sums to 1).
