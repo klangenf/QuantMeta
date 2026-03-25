@@ -53,3 +53,4 @@ bash Scripts/standard_curve_analysis.sh ${SLURM_ARRAY_TASK_ID} $config $fq $stan
 ### once all of the array jobs are complete, run the regression builder
 if [[ $(squeue -u $USER -n $(basename $0) -h | wc -l) -eq 0 ]]; then
     python3 Scripts/quantmeta.py --sample-info $spike --dsDNA-std-mixes $mix --ssDNA-std-mixes $ssmix --detect-threshold $detect
+    python3 Scripts/quant_correct_regression_builder.py 
