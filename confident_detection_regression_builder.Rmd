@@ -4,7 +4,7 @@ Author: "Dr. Kathryn Langenfeld"
 Output: html_notebook
 ---
 
-Purpose: This R notebook is designed to develop a regression to determine E_detect (minimum E_rel) for confident detection with respect to a target's length. The regression from Langenfeld et al. (2022) may be adopted, but the minimum E_rel is based on the standards proposed by FastViromeExplorer (Lithi et al. 2018) (10% read coverage and 0.3 observed/expected read distribution). If these parameters are deemed inappropriate for specific applications, it is recommended that new E_detect regressions be created for specific research needs.
+Purpose: This R notebook is designed to develop a regression to determine E_detect (minimum E_rel) for confident detection with respect to a target's length. The regression from Langenfeld et al. (2025) may be adopted, but the minimum E_rel is based on the standards proposed by FastViromeExplorer (Lithi et al. 2018) (10% read coverage and 0.3 observed/expected read distribution). If these parameters are deemed inappropriate for specific applications, it is recommended that new E_detect regressions be created for specific research needs.
 
 Load required R packages
 ```{r}
