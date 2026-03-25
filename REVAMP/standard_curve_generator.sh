@@ -22,7 +22,7 @@ Options:
   -std, --standards FILE          Fasta file with standard sequences (default: Map_Indexes/Langenfeld_2025_standards.fasta)
   -mix, --dsDNA-std-file FILE     Table of dsDNA standards (ID, Mass, Rel_Abund, length) (default: Spike-ins/sequins_Mix_A.txt)
   -ssmix, --ssDNA-std-file FILE   Optional table of ssDNA standards (ID, Mass, Rel_Abund, length)
-  -spike, --spike-in-info FILE    Table of sample-specific spike-in information (Sample, Library_Mass (ng), DNA_Extract_Conc (ng/µL), Spike_Frac, ssDNA (None/Spike_Frac) (default: Config/spike_in_info.txt)
+  -spike, --spike-in-info FILE    Table of sample-specific spike-in information (Sample, Library_Mass (ng), DNA_Extract_Conc (ng/µL), Spike_Frac, ssDNA (0/Spike_Frac) (default: Config/spike_in_info.txt)
   -detect, --detection-threshold FILE  Detection threshold json file (default: Regressions/detect/Langenfeld_2025_E_detect.json)
   -j, --cores N                   Number of cores (default: 2)
   -mem, --memory N                Memory per CPU (default: 10gb)
@@ -52,4 +52,4 @@ bash Scripts/standard_curve_analysis.sh ${SLURM_ARRAY_TASK_ID} $config $fq $stan
 
 ### once all of the array jobs are complete, run the regression builder
 if [[ $(squeue -u $USER -n $(basename $0) -h | wc -l) -eq 0 ]]; then
-    python3 Scripts/quantmeta.py --sample-file $config --std-file $mix --ssdna-std-file $ssmix --min_coverage $min_coverage --min_distribution $min_distribution --test-database $tn
+    python3 Scripts/quantmeta.py --sample-info $spike --dsDNA-std-mixes $mix --ssDNA-std-mixes $ssmix --detect-threshold $detect
