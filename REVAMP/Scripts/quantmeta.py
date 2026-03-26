@@ -7,7 +7,6 @@ abundance to absolute abundance for each sample.
 
 import argparse
 import json
-import os
 import pickle
 from pathlib import Path
 
