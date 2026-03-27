@@ -213,7 +213,8 @@ def quantmeta(sample_name,
     model = {
         'slope': float(slope),
         'intercept': float(intercept),
-        'r_sq': float(r_value**2)
+        'r_sq': float(r_value**2),
+        'n': int(len(results))
     }
 
     reg_name = Path('Regressions/quantification') / f'{sample_name}_rel_to_abs.pkl'

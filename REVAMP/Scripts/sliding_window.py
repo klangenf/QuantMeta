@@ -74,7 +74,7 @@ def compute_stats(seq,window_size,contig):
         depth_window = depth_array[i:end]
         avg_depth = compute_avg_depth(depth_window)
         gc = compute_gc(seq_window)
-        stats.append({"ID":contig,"avg_gc":gc,"avg_depth":avg_depth})
+        stats.append({"ID":contig,"avg_GC":gc,"avg_depth":avg_depth})
     
     return(stats)
     
@@ -109,7 +109,7 @@ if __name__ == '__main__':
        stats += compute_stats(seqs[seq],window_size,seq)
 
     #write tsv 
-    tsv_columns = ["ID","avg_gc","avg_depth"]
+    tsv_columns = ["ID","avg_GC","avg_depth"]
     with open(output, 'w') as tsvfile:
         writer = csv.DictWriter(tsvfile, fieldnames=tsv_columns, delimiter = '\t')
         writer.writeheader()

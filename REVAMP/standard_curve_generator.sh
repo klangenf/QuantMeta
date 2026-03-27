@@ -24,13 +24,14 @@ Options:
   -ssmix, --ssDNA-std-file FILE   Optional table of ssDNA standards (ID, Mass, Rel_Abund, length)
   -spike, --spike-in-info FILE    Table of sample-specific spike-in information (Sample, Library_Mass (ng), DNA_Extract_Conc (ng/µL), Spike_Frac, ssDNA (0/Spike_Frac) (default: Config/spike_in_info.txt)
   -detect, --detection-threshold FILE  Detection threshold json file (default: Regressions/detect/Langenfeld_2025_E_detect.json)
+  -w, --window-size N             Window size for sliding window analysis (default: 49)
   -j, --cores N                   Number of cores (default: 2)
   -mem, --memory N                Memory per CPU (default: 10gb)
   -t, --time TIME                 Time limit (default: 02:00:00)
   -h, --help                      Show this help message
 
 Example:
-  $0 --config Config/config_example_samples.yaml --fastq-dir Reads/ --std Map_Indexes/Langenfeld_2025_standards.fasta --mix Spike-ins/sequins_Mix_A.txt --spike-in-info Config/spike_in_info.txt --detection-threshold Regressions/detect/Langenfeld_2025_E_detect.json
+  $0 --config Config/config_example_samples.yaml --fastq-dir Reads/ --std Map_Indexes/Langenfeld_2025_standards.fasta --mix Spike-ins/sequins_Mix_A.txt --spike-in-info Config/spike_in_info.txt --detection-threshold Regressions/detect/Langenfeld_2025_E_detect.json --window-size 49
 EOF
 exit 1
 }
@@ -48,7 +49,7 @@ exit 1
 
 echo ${SLURM_ARRAY_TASK_ID}
 
-bash Scripts/standard_curve_analysis.sh ${SLURM_ARRAY_TASK_ID} $config $fq $standards
+bash Scripts/standard_curve_analysis.sh ${SLURM_ARRAY_TASK_ID} $config $fq $standards $window_size
 
 ### once all of the array jobs are complete, run the regression builder
 if [[ $(squeue -u $USER -n $(basename $0) -h | wc -l) -eq 0 ]]; then
