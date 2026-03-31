@@ -18,7 +18,7 @@ Usage: $0 [OPTIONS]
 
 Options:
   -c, --config FILE               Config file of samples (default: Config/sample_list.txt)
-  -fq, --fastq-dir DIR            Directory containing deinterleaved fastq files named as {sample_name}_R1.fastq.gz and {sample_name}_R2.fastq.gz (default: Reads/)
+  -b, --bam-dir DIR               Directory containing sorted bam files of mapping reads to standards named as {sample_name}_standards_sorted.bam (default: Mapping/example_1_standards_sorted.bam)
   -std, --standards FILE          Fasta file with standard sequences (default: Map_Indexes/Langenfeld_2025_standards.fasta)
   -mix, --dsDNA-std-file FILE     Table of dsDNA standards (ID, Mass, Rel_Abund, length) (default: Spike-ins/sequins_Mix_A.txt)
   -ssmix, --ssDNA-std-file FILE   Optional table of ssDNA standards (ID, Mass, Rel_Abund, length)
@@ -49,7 +49,7 @@ exit 1
 
 echo ${SLURM_ARRAY_TASK_ID}
 
-bash Scripts/standard_curve_analysis.sh ${SLURM_ARRAY_TASK_ID} $config $fq $standards $window_size
+bash Scripts/standard_curve_analysis.sh ${SLURM_ARRAY_TASK_ID} $config $bam_dir $standards $window_size
 
 ### once all of the array jobs are complete, run the regression builder
 if [[ $(squeue -u $USER -n $(basename $0) -h | wc -l) -eq 0 ]]; then

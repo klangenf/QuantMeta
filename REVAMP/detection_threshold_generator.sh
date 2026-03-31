@@ -25,6 +25,7 @@ Options:
   -mix, --dsDNA-std-file FILE     Table of dsDNA standards (ID, Mass, Rel_Abund, length) (default: Spike-ins/sequins_Mix_A.txt)
   -ssmix, --ssDNA-std-file FILE   Optional table of ssDNA standards (ID, Mass, Rel_Abund, length)
   -test, --test-database FILE     Fasta file with test sequences (default: Map_Indexes/RefSeq_viruses.fasta)
+  -tb, --test-bam-dir DIR         Directory containing sorted bam files of mapping reads to test database named as {sample_name}_{test_name}_sorted.bam (default: Mapping/example_1_RefSeq_viruses_sorted.bam)
   -tn, --test-name NAME           Name for test database (default: RefSeq_viruses)
   -min_cov, --min-coverage FLOAT  Minimum read coverage threshold for detection (default: 0.1)
   -min_dist, --min-distribution FLOAT Minimum read distribution threshold for detection (default: 0.3)
@@ -52,7 +53,7 @@ EOF
 
 echo ${SLURM_ARRAY_TASK_ID}
 
-bash Scripts/detection_threshold_analysis.sh ${SLURM_ARRAY_TASK_ID} $config $standards $tn $test $fq
+bash Scripts/detection_threshold_analysis.sh ${SLURM_ARRAY_TASK_ID} $config $standards $tn $test $fq $tb
 
 ### once all of the array jobs are complete, run the regression builder
 if [[ $(squeue -u $USER -n $(basename $0) -h | wc -l) -eq 0 ]]; then

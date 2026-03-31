@@ -53,12 +53,12 @@ done
 
 ### Map reads to test database
 bioawk -c fastx '{{ print $name, length($seq) }}' < $5 > Map_Indexes/${4}_lengths.txt
-bowtie2-build -f $5 Map_Indexes/${4}
-bowtie2 -x Map_Indexes/${4} -q -1 $reads_1 -2 $reads_2 -S tmp/${sample}/${4}.sam
-samtools view -S -b tmp/${sample}/${4}.sam > tmp/${sample}/${4}.bam
-samtools sort tmp/${sample}/${4}.bam -o tmp/${sample}/${4}_sorted.bam
-samtools index tmp/${sample}/${4}_sorted.bam
-samtools depth -a -H tmp/${sample}/${4}_sorted.bam --reference $5 > tmp/${sample}/${4}_depth.txt
+# bowtie2-build -f $5 Map_Indexes/${4}
+# bowtie2 -x Map_Indexes/${4} -q -1 $reads_1 -2 $reads_2 -S tmp/${sample}/${4}.sam
+# samtools view -S -b tmp/${sample}/${4}.sam > tmp/${sample}/${4}.bam
+# samtools sort tmp/${sample}/${4}.bam -o tmp/${sample}/${4}_sorted.bam
+# samtools index tmp/${sample}/${4}_sorted.bam
+samtools depth -a -H $7 --reference $5 > tmp/${sample}/${4}_depth.txt
 python3 Scripts/organize_mapping.py -d tmp/${sample}/${4}_depth.txt -f $5 -o Mapping/${sample}/${4}_mapping.txt
 
 echo done

@@ -19,8 +19,8 @@ Usage: $0 [OPTIONS]
 
 Options:
   -c, --config FILE               Config file of samples (default: Config/sample_list.txt)
-  -fq, --fastq-dir DIR            Directory containing deinterleaved fastq files named as {sample_name}_R1.fastq.gz and {sample_name}_R2.fastq.gz (default: Reads/)
   -T, --targets FILE              Fasta file with target sequences (default: Map_Indexes/RefSeq_Viruses.fasta)
+  -Tb, --targets-bam-dir DIR      Directory containing sorted bam files of mapping reads to target database named as {sample_name}_{target_name}_sorted.bam (default: Mapping/example_1_RefSeq_Viruses_sorted.bam)
   -N, --target-name NAME          Name for target database (default: RefSeq_Viruses)
   -w, --window-size N             Window size for sliding window analysis, must be the same as used in standard_curve_generator.sh (default: 49)
   -detect, --detection-threshold FILE  Detection threshold json file (default: Regressions/detect/Langenfeld_2025_E_detect.json)
@@ -51,7 +51,7 @@ exit 1
 #SBATCH --time=$time
 
 bioawk -c fastx '{{ print $name, length($seq) }}' < $targets > Map_Indexes/${target_name}_lengths.txt
-bowtie2-build -f $targets Map_Indexes/${target_name}
+# bowtie2-build -f $targets Map_Indexes/${target_name}
 
 # Environment
 ##SBATCH --export=ALL
@@ -59,4 +59,4 @@ bowtie2-build -f $targets Map_Indexes/${target_name}
 
 echo ${SLURM_ARRAY_TASK_ID}
 
-bash Scripts/quant_targets_unknown.sh ${SLURM_ARRAY_TASK_ID} $config $fq $targets $target_name $window_size $detect $rdv1 $rdv2 $rdv3 $rdv4 $rmse1 $rmse2 $rmse3 $rmse4
+bash Scripts/quant_targets_unknown.sh ${SLURM_ARRAY_TASK_ID} $config $targets_bam_dir $targets $target_name $window_size $detect $rdv1 $rdv2 $rdv3 $rdv4 $rmse1 $rmse2 $rmse3 $rmse4
