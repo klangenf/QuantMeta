@@ -136,20 +136,20 @@ def predict_read_var(model, X_new):
     if bin_name == 'bin4':
         X_fit = np.column_stack([
             X_new['avg_GC']**2, X_new['avg_GC'], np.ones(len(X_new)),
-            np.log(X_new['total_avg_depth'])
+            np.log(X_new['gene_copies'])
         ])
         preds = X_fit @ coeffs
         
     elif bin_name == 'bin3':
         X_fit = np.column_stack([
             X_new['avg_GC']**2, X_new['avg_GC'], np.ones(len(X_new)),
-            np.log(X_new['total_avg_depth'])
+            np.log(X_new['gene_copies'])
         ])
         preds = X_fit @ coeffs
         preds = np.exp(preds)
         
     elif bin_name == 'bin2':
-        log_depth = np.log(X_new['total_avg_depth'])
+        log_depth = np.log(X_new['gene_copies'])
         X_fit = np.column_stack([
             X_new['avg_GC']**2, X_new['avg_GC'], np.ones(len(X_new)),
             log_depth**2, log_depth
@@ -158,7 +158,7 @@ def predict_read_var(model, X_new):
         preds = np.exp(preds) - 1
         
     elif bin_name == 'bin1':
-        log_depth = np.log(X_new['total_avg_depth'])
+        log_depth = np.log(X_new['gene_copies'])
         X_fit = np.column_stack([
             X_new['avg_GC']**2, X_new['avg_GC'], np.ones(len(X_new)),
             log_depth**2, log_depth,
