@@ -34,11 +34,11 @@ for downsample in 1,10; do
 done
 
 ### Curate failure standards (negative controls) and map reads to them
-./mutation-simulator.py $3 args -sn 0.1 -in 0.02 -inl 5 -de 0.02 -del 5 -iv 0.02 -ivl 5 -du 0.02 -dul 5 -tl 0.02 -tll 5 -o Map_Indexes/fail_standards_r1/fail_standards.fasta
-./mutation-simulator.py Map_Indexes/fail_standards_r1/fail_standards.fasta args -sn 0.1 -in 0.02 -inl 5 -de 0.02 -del 5 -iv 0.02 -ivl 5 -du 0.02 -dul 5 -tl 0.02 -tll 5 -o Map_Indexes/fail_standards_r2/fail_standards.fasta
-./mutation-simulator.py Map_Indexes/fail_standards_r2/fail_standards.fasta args -sn 0.1 -in 0.02 -inl 5 -de 0.02 -del 5 -iv 0.02 -ivl 5 -du 0.02 -dul 5 -tl 0.02 -tll 5 -o Map_Indexes/fail_standards_r3/fail_standards.fasta
-./mutation-simulator.py Map_Indexes/fail_standards_r3/fail_standards.fasta args -sn 0.1 -in 0.02 -inl 5 -de 0.02 -del 5 -iv 0.02 -ivl 5 -du 0.02 -dul 5 -tl 0.02 -tll 5 -o Map_Indexes/fail_standards_r4/fail_standards.fasta
-./mutation-simulator.py Map_Indexes/fail_standards_r4/fail_standards.fasta args -sn 0.1 -in 0.02 -inl 5 -de 0.02 -del 5 -iv 0.02 -ivl 5 -du 0.02 -dul 5 -tl 0.02 -tll 5 -o Map_Indexes/fail_standards_r5/fail_standards.fasta
+mutation-simulator $3 args -sn 0.1 -in 0.02 -inl 5 -de 0.02 -del 5 -iv 0.02 -ivl 5 -du 0.02 -dul 5 -tl 0.02 -tll 5 -o Map_Indexes/fail_standards_r1/fail_standards.fasta
+mutation-simulator Map_Indexes/fail_standards_r1/fail_standards.fasta args -sn 0.1 -in 0.02 -inl 5 -de 0.02 -del 5 -iv 0.02 -ivl 5 -du 0.02 -dul 5 -tl 0.02 -tll 5 -o Map_Indexes/fail_standards_r2/fail_standards.fasta
+mutation-simulator Map_Indexes/fail_standards_r2/fail_standards.fasta args -sn 0.1 -in 0.02 -inl 5 -de 0.02 -del 5 -iv 0.02 -ivl 5 -du 0.02 -dul 5 -tl 0.02 -tll 5 -o Map_Indexes/fail_standards_r3/fail_standards.fasta
+mutation-simulator Map_Indexes/fail_standards_r3/fail_standards.fasta args -sn 0.1 -in 0.02 -inl 5 -de 0.02 -del 5 -iv 0.02 -ivl 5 -du 0.02 -dul 5 -tl 0.02 -tll 5 -o Map_Indexes/fail_standards_r4/fail_standards.fasta
+mutation-simulator Map_Indexes/fail_standards_r4/fail_standards.fasta args -sn 0.1 -in 0.02 -inl 5 -de 0.02 -del 5 -iv 0.02 -ivl 5 -du 0.02 -dul 5 -tl 0.02 -tll 5 -o Map_Indexes/fail_standards_r5/fail_standards.fasta
 
 for fail_set in r1 r2 r3 r4 r5; do
     bioawk -c fastx '{{ print $name, length($seq) }}' < Map_Indexes/fail_standards_${fail_set}/fail_standards.fasta > Map_Indexes/fail_standards_${fail_set}/fail_standards_lengths.txt

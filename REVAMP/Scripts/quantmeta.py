@@ -95,7 +95,7 @@ def detection_threshold(sample_name, mapping_results_path, target_length_df, det
     # Compute remaining metrics using vectorized operations
     targets = targets.assign(
         E_rel=lambda df: df['I_G'] / np.log(df['length']).where(df['length'] > 1, 1),
-        E_detect=predict_E_detect_by_length(df['length'].astype(float).values, detect_model),
+        E_detect=predict_E_detect_by_length(targets['length'].astype(float).values, detect_thresh),
         detection_status=lambda df: np.where(df['E_rel'] >= df['E_detect'], 'detected', 'not_detected')
     )
 
@@ -168,13 +168,13 @@ def quantmeta(sample_name,
               ssDNA_spike,
               detect_thresh):
 
-    dsDNA_STD = pd.read_csv(dsDNA_stds, sep='\t', header=0)
+    dsDNA_STD = dsDNA_stds
     dsDNA_STD.columns = ['ID', 'Mass', 'Rel_Abund', 'length']
     dsDNA_STD['Type'] = 'dsDNA'
     STD_MIX = dsDNA_STD.dropna().reset_index(drop=True)
 
     if ssDNA_spike > 0:
-        ssDNA_STD = pd.read_csv(ssDNA_stds, sep='\t', header=0)
+        ssDNA_STD = ssDNA_stds
         ssDNA_STD.columns = ['ID', 'length', 'Mass', 'MIX']
         ssDNA_STD = ssDNA_STD.dropna().reset_index(drop=True)
         ssDNA_STD['Type'] = 'ssDNA'
@@ -195,7 +195,7 @@ def quantmeta(sample_name,
     if ssDNA_spike > 0:
         ssDNA_mapping = mapping[mapping['ID'].isin(ssDNA_STD['ID'])].copy()
 
-        ssDNA_results = expected_conc(ssDNA_STD, ssDNA_spike, DNA_conc)
+        ssDNA_results = expected_conc(ssDNA_STD.copy(), ssDNA_spike, DNA_conc)
         ssDNA_predict = prediction(ssDNA_mapping, DNA_input, DNA_conc)
         ssDNA_predict['predicted_conc'] = ssDNA_predict['predicted_conc']*2 # adjust for ssDNA vs dsDNA
         ssDNA_results = ssDNA_results.merge(ssDNA_predict, on='ID', how='inner')

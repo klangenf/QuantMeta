@@ -16,6 +16,7 @@ bam="${3}/${sample}_standards_sorted.bam"
 # samtools view -S -b tmp/${sample}/standards.sam > tmp/${sample}/standards.bam
 # samtools sort tmp/${sample}/standards.bam -o tmp/${sample}/standards_sorted.bam
 # samtools index tmp/${sample}/standards_sorted.bam
+mkdir tmp/${sample}
 samtools depth -a -H $bam --reference $4 > tmp/${sample}/standards_depth.txt
 python3 Scripts/organize_mapping.py -d tmp/${sample}/standards_depth.txt -f $4 -o Mapping/${sample}/standards_mapping.txt
 python3 Scripts/sliding_window.py -m Mapping/${sample}/standards_mapping.txt -o Mapping/${sample}/standards_sliding_window.txt -n $5

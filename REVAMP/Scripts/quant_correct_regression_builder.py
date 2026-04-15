@@ -32,12 +32,8 @@ for the least abundant standards with incomplete coverage (i.e., 0-10 reads/bp b
 import argparse
 import pandas as pd
 import numpy as np
-import json
 import pickle
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-from scipy import stats
-from scipy.stats import linregress
 from pathlib import Path
 import warnings
 
