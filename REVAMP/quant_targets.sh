@@ -1,10 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-### standard_curve_generator.sh
-### Generate standard curves relating relative abundance to absolute abundance.
+### quant_targets.sh
+### Generate quantification results for selected targets.
 ### Works towards:
-### - mapping reads to selected targets (bowtie2 + samtools)
 ### - applying detection thresholds (default: Langenfeld_2025_E_detect)
 ### - applying quantification correction
 ### - quant_targets.py (determine concentrations of targets)
@@ -13,15 +12,34 @@ set -euo pipefail
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$BASE_DIR"
 
+# Default values
+config="Config/sample_list.txt"
+targets=""
+targets_bam_dir="Mapping/"
+target_name=""
+window_size=49
+detect="Regressions/detection/Langenfeld_2025_E_detect.json"
+read_depth_variability_model1="Regressions/read_depth_variability/Langenfeld_2025_0to10readsperbp.pkl"
+read_depth_variability_model2="Regressions/read_depth_variability/Langenfeld_2025_10to100readsperbp.pkl"
+read_depth_variability_model3="Regressions/read_depth_variability/Langenfeld_2025_100to1000readsperbp.pkl"
+read_depth_variability_model4="Regressions/read_depth_variability/Langenfeld_2025_gte1000readsperbp.pkl"
+rmse_cutoff_function1="Regressions/threshold_read_depth_variability/Langenfeld_2025_0to10readsperbp.pkl"
+rmse_cutoff_function2="Regressions/threshold_read_depth_variability/Langenfeld_2025_10to100readsperbp.pkl"
+rmse_cutoff_function3="Regressions/threshold_read_depth_variability/Langenfeld_2025_100to1000readsperbp.pkl"
+rmse_cutoff_function4="Regressions/threshold_read_depth_variability/Langenfeld_2025_gte1000readsperbp.pkl"
+cores=2
+memory="10gb"
+time="2-00:00:00"
+
 usage() {
   cat <<EOF
 Usage: $0 [OPTIONS]
 
 Options:
   -c, --config FILE               Config file of samples (default: Config/sample_list.txt)
-  -T, --targets FILE              Fasta file with target sequences (default: Map_Indexes/RefSeq_Viruses.fasta)
-  -Tb, --targets-bam-dir DIR      Directory containing sorted bam files of mapping reads to target database named as {sample_name}_{target_name}_sorted.bam (default: Mapping/example_1_RefSeq_Viruses_sorted.bam)
-  -N, --target-name NAME          Name for target database (default: RefSeq_Viruses)
+  -T, --targets FILE              Fasta file with target sequences (default: none, required)
+  -Tb, --targets-bam-dir DIR      Directory containing sorted bam files of mapping reads to target database named as {sample_name}_{target_name}_sorted.bam (default: Mapping/)
+  -N, --target-name NAME          Name for target database (default: none, required, used for naming output files)
   -w, --window-size N             Window size for sliding window analysis, must be the same as used in standard_curve_generator.sh (default: 49)
   -detect, --detection-threshold FILE  Detection threshold json file (default: Regressions/detect/Langenfeld_2025_E_detect.json)
   -rdv1, --read-depth-variability-model1 FILE  Read depth variability model for 0-10 reads/bp (default: Regressions/read_depth_variability/Langenfeld_2025_0to10readsperbp.pkl)
@@ -43,20 +61,35 @@ EOF
 exit 1
 }
 
-# Resources
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=$cores
-#SBATCH --mem-per-cpu=$memory
-#SBATCH --time=$time
+# Option parsing
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -c|--config) config="$2"; shift 2 ;;
+    -T|--targets) targets="$2"; shift 2 ;;
+    -Tb|--targets-bam-dir) targets_bam_dir="$2"; shift 2 ;;
+    -N|--target-name) target_name="$2"; shift 2 ;;
+    -w|--window-size) window_size="$2"; shift 2 ;;
+    -detect|--detection-threshold) detect="$2"; shift 2 ;;
+    -rdv1|--read-depth-variability-model1) rdv1="$2"; shift 2 ;;
+    -rdv2|--read-depth-variability-model2) rdv2="$2"; shift 2 ;;
+    -rdv3|--read-depth-variability-model3) rdv3="$2"; shift 2 ;;
+    -rdv4|--read-depth-variability-model4) rdv4="$2"; shift 2 ;;
+    -rmse1|--rmse-cutoff-function1) rmse1="$2"; shift 2 ;;
+    -rmse2|--rmse-cutoff-function2) rmse2="$2"; shift 2 ;;
+    -rmse3|--rmse-cutoff-function3) rmse3="$2"; shift 2 ;;
+    -rmse4|--rmse-cutoff-function4) rmse4="$2"; shift 2 ;;
+    -j|--cores) cores="$2"; shift 2 ;;
+    -mem|--memory) memory="$2"; shift 2 ;;
+    -t|--time) time="$2"; shift 2 ;;
+    -h|--help) usage ;;
+    *) echo "Unknown option: $1"; usage ;;
+  esac
+done
 
 bioawk -c fastx '{{ print $name, length($seq) }}' < $targets > Map_Indexes/${target_name}_lengths.txt
-# bowtie2-build -f $targets Map_Indexes/${target_name}
 
-# Environment
-##SBATCH --export=ALL
-#SBATCH --array=0-$(($(wc -l < $config) - 1))
+# Get number of samples
+num_samples=$(wc -l < "$config")
 
-echo ${SLURM_ARRAY_TASK_ID}
-
-bash Scripts/quant_targets_unknown.sh ${SLURM_ARRAY_TASK_ID} $config $targets_bam_dir $targets $target_name $window_size $detect $rdv1 $rdv2 $rdv3 $rdv4 $rmse1 $rmse2 $rmse3 $rmse4
+# Run analysis for each sample in parallel (up to $cores at a time)
+seq 0 $((num_samples - 1)) | xargs -n 1 -P "$cores" -I {} bash -c 'bash Scripts/quant_targets_unknown.sh "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "$10" "$11" "$12" "$13" "$14" "$15"' _ {} "$config" "$targets_bam_dir" "$targets" "$target_name" "$window_size" "$detect" "$rdv1" "$rdv2" "$rdv3" "$rdv4" "$rmse1" "$rmse2" "$rmse3" "$rmse4"

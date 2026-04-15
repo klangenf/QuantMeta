@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-### standard_curve_generator_v2.sh
+### standard_curve_generator.sh
 ### Generate standard curves relating relative abundance to absolute abundance.
 ### Modified version of standard_curve_generator.sh without SLURM dependencies.
 ### Works towards:
