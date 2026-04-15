@@ -34,6 +34,8 @@ import pandas as pd
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
+from scipy import stats
+from scipy.stats import linregress
 from pathlib import Path
 import warnings
 
@@ -360,7 +362,7 @@ def main():
     
     # RMSE scatter plot with thresholds
     fig, ax = plt.subplots(figsize=(10, 7))
-    ax.scatter(RMSE_results['gene_copies'], RMSE_results['RMSE'], alpha=0.6")
+    ax.scatter(RMSE_results['gene_copies'], RMSE_results['RMSE'], alpha=0.6)
     ax.set_xscale('log')
     ax.set_yscale('log')
     ax.set_xlabel('Average Read Depth (reads/bp)')
