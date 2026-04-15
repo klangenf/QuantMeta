@@ -140,17 +140,17 @@ def visualize(sample_name, results):
     y_line = 10 ** (intercept + slope * np.log10(x_line))
 
     plt.plot(x_line, y_line, color='red', linestyle='--', linewidth=1.5,
-             label=f'y = {10**intercept:.2f} x^{slope:.2f}  (R^2={r_value**2:.3f})')
+             label=f'log10(y) = {intercept:.2f} + {slope:.2f}log10(x)  (R^2={r_value**2:.3f})')
 
     plt.xscale('log')
     plt.yscale('log')
     plt.xlabel('Predicted concentration (gc/µL)')
     plt.ylabel('Known concentration (gc/µL)')
-    plt.title(f'{sample_name}: Known vs predicted concentration')
+    plt.title(f'{sample_name}: Absolute vs. Rela')
     plt.legend()
     plt.grid(True, which='both', ls=':', alpha=0.3)
 
-    output_path = Path('Regressions/quantification') / sample_name / 'standards_rel_to_abs.png'
+    output_path = Path('Regressions/quantification') / f'{sample_name}_standards_rel_to_abs.png'
     output_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_path, dpi=320, bbox_inches='tight')
     plt.close()
@@ -169,13 +169,11 @@ def quantmeta(sample_name,
               detect_thresh):
 
     dsDNA_STD = dsDNA_stds
-    dsDNA_STD.columns = ['ID', 'Mass', 'Rel_Abund', 'length']
     dsDNA_STD['Type'] = 'dsDNA'
     STD_MIX = dsDNA_STD.dropna().reset_index(drop=True)
 
     if ssDNA_spike > 0:
         ssDNA_STD = ssDNA_stds
-        ssDNA_STD.columns = ['ID', 'length', 'Mass', 'MIX']
         ssDNA_STD = ssDNA_STD.dropna().reset_index(drop=True)
         ssDNA_STD['Type'] = 'ssDNA'
         STD_MIX = pd.concat([STD_MIX, ssDNA_STD], ignore_index=True)
