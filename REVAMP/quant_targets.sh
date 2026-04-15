@@ -27,7 +27,7 @@ rmse_cutoff_function1="Regressions/threshold_read_depth_variability/Langenfeld_2
 rmse_cutoff_function2="Regressions/threshold_read_depth_variability/Langenfeld_2025_10to100readsperbp.pkl"
 rmse_cutoff_function3="Regressions/threshold_read_depth_variability/Langenfeld_2025_100to1000readsperbp.pkl"
 rmse_cutoff_function4="Regressions/threshold_read_depth_variability/Langenfeld_2025_gte1000readsperbp.pkl"
-cores=2
+cores=4
 memory="10gb"
 time="2-00:00:00"
 

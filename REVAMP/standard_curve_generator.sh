@@ -23,7 +23,7 @@ ssmix=""
 spike="Config/spike_in_info.txt"
 detect="Regressions/detection/Langenfeld_2025_E_detect.json"
 window_size=49
-cores=2
+cores=4
 memory="10gb"
 time="02:00:00"
 
@@ -40,7 +40,7 @@ Options:
   -spike, --spike-in-info FILE    Table of sample-specific spike-in information (Sample, Library_Mass (ng), DNA_Extract_Conc (ng/µL), Spike_Frac, ssDNA (0/Spike_Frac) (default: Config/spike_in_info.txt)
   -detect, --detection-threshold FILE  Detection threshold json file (default: Regressions/detection/Langenfeld_2025_E_detect.json)
   -w, --window-size N             Window size for sliding window analysis (default: 49)
-  -j, --cores N                   Number of cores (default: 2)
+  -j, --cores N                   Number of cores (default: 4)
   -mem, --memory N                Memory per CPU (default: 10gb)
   -t, --time TIME                 Time limit (default: 02:00:00)
   -h, --help                      Show this help message
