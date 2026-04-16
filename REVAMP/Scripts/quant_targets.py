@@ -389,18 +389,11 @@ def quant_correction(sample_name, input_info, sliding_window, quad_reg1, quad_re
 
 def parse_input(input):
     seqs = collections.defaultdict(dict)
-    with open(input) as f:
-        for line in f:
-            if "position" in line:
-                pass
-            else:
-                contig_id,position,read_depth,nuc_acid = line.replace('"','').strip().split("\t")
-                if contig_id in seqs.keys():
-                    seqs[contig_id]["sequence"].append(nuc_acid)
-                    seqs[contig_id]["read_depth"].append(int(read_depth))            
-                else:
-                    seqs[contig_id]["sequence"] = [nuc_acid]
-                    seqs[contig_id]["read_depth"] = [int(read_depth)]
+    for contig_id, group in input.groupby('contig_id'):
+        seqs[contig_id] = {
+            "sequence": group['nuc_acid'].tolist(),
+            "read_depth": group['read_depth'].astype(int).tolist()
+        }
     return(seqs)
 
 def compute_stats(seq, window_size=49, contig=None):
