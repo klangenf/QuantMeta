@@ -14,6 +14,7 @@ import pandas as pd
 import numpy as np
 import pickle
 import json
+import collections
 from pathlib import Path
 import warnings
 
@@ -105,20 +106,20 @@ def predict_read_var(model, X_new):
     if bin_name == 'bin4':
         X_fit = np.column_stack([
             X_new['avg_GC']**2, X_new['avg_GC'], np.ones(len(X_new)),
-            np.log(X_new['total_avg_depth'])
+            np.log(X_new['gene_copies'])
         ])
         preds = X_fit @ coeffs
 
     elif bin_name == 'bin3':
         X_fit = np.column_stack([
             X_new['avg_GC']**2, X_new['avg_GC'], np.ones(len(X_new)),
-            np.log(X_new['total_avg_depth'])
+            np.log(X_new['gene_copies'])
         ])
         preds = X_fit @ coeffs
         preds = np.exp(preds)
 
     elif bin_name == 'bin2':
-        log_depth = np.log(X_new['total_avg_depth'])
+        log_depth = np.log(X_new['gene_copies'])
         X_fit = np.column_stack([
             X_new['avg_GC']**2, X_new['avg_GC'], np.ones(len(X_new)),
             log_depth**2, log_depth
@@ -127,7 +128,7 @@ def predict_read_var(model, X_new):
         preds = np.exp(preds) - 1
 
     elif bin_name == 'bin1':
-        log_depth = np.log(X_new['total_avg_depth'])
+        log_depth = np.log(X_new['gene_copies'])
         X_fit = np.column_stack([
             X_new['avg_GC']**2, X_new['avg_GC'], np.ones(len(X_new)),
             log_depth**2, log_depth,
@@ -306,12 +307,12 @@ def quant_correction(sample_name, input_info, sliding_window, quad_reg1, quad_re
                            (sliding_window['avg_depth'] < lower))]['error_region'] = 'TRUE'
            
            # Recalculate average depth excluding error regions
-                specific_regions = sliding_window[sliding_window['error_region'] == 'FALSE']
-                if len(specific_regions) > 0:
-                    sliding_window['gene_copies'] = specific_regions['avg_depth'].mean()
-                else:
-                    input_info.loc[0, 'frac_corrected'] = 1
-                    break
+           specific_regions = sliding_window[sliding_window['error_region'] == 'FALSE']
+           if len(specific_regions) > 0: 
+               sliding_window['gene_copies'] = specific_regions['avg_depth'].mean()
+           else:
+               input_info.loc[0, 'frac_corrected'] = 1
+               break
            
            # Select appropriate models based on depth
            if sliding_window.loc[0, 'gene_copies'] < 10:
@@ -381,15 +382,14 @@ def quant_correction(sample_name, input_info, sliding_window, quad_reg1, quad_re
            # Calculate fraction corrected
            input_info.loc[0, 'frac_corrected'] = np.sum(sliding_window['avg_depth'] != sliding_window['initial_avg_depth']) / len(sliding_window)
            
-
-        # Save corrected mapping sliding windows for this target
-        output_dir = Path("Results/{sample_name}/Ind_Correction_Results/{input_info[0, 'ID']}_corrected_mapping.tsv")
-        output_dir.parent.mkdir(parents=True, exist_ok=True)
-        sliding_window.to_csv(output_dir, sep='\t', index=False)
+    # Save corrected mapping sliding windows for this target
+    output_dir = Path("Results/{sample_name}/Ind_Correction_Results/{input_info[0, 'ID']}_corrected_mapping.tsv")
+    output_dir.parent.mkdir(parents=True, exist_ok=True)
+    sliding_window.to_csv(output_dir, sep='\t', index=False)
 
     return input_info
 
-def parse_input( input):
+def parse_input(input):
     seqs = collections.defaultdict(dict)
     with open(input) as f:
         for line in f:
@@ -523,8 +523,6 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results, wind
         corrected += quant_correction(sample_name, results[results['ID'] == ID], sliding_window, 
                                       quad_reg1, quad_reg2, quad_reg3, quad_reg4, cutoff_function1, 
                                       cutoff_function2, cutoff_function3, cutoff_function4)
-    else:
-        continue
 
     results = results.subset(~results['ID'].isin(corrected['ID']))
     results = results.subset(results['ID', 'RMSE', 'RMSE_limit', 'gene_copies', 'status'])
@@ -624,9 +622,6 @@ def quant_unknown(sample_name, target_name, database_lengths, mapping_results_pa
     # Load mapping data
     mapping_results = pd.read_csv(mapping_results_path, sep='\t', header=0)
 
-    # Load quantification regression model
-    quant_rel = load_pickle_model(quant_regression_path)
-
     # Assess detection thresholds
     detect_thresh = load_detection_model(E_detect_model_path)
 
@@ -650,7 +645,6 @@ def quant_unknown(sample_name, target_name, database_lengths, mapping_results_pa
     else:
         print("No targets above detection and quantifiable!")
         pd.DataFrame({"message": ["No targets above detection and quantifiable!"]}).to_csv(output_dir, index=False, header=False)
-        break
 
     # Convert relative abundances from fractions to copies/µL DNA extract
     results = prediction(mapping, DNA_input, DNA_conc)
@@ -658,7 +652,7 @@ def quant_unknown(sample_name, target_name, database_lengths, mapping_results_pa
     # Convert to absolute abundance using regression model
     quant_regression = load_pickle_model(quant_regression_path)
     pred = quant_regression['intercept'] + quant_regression['slope'] * np.log10(results['predicted_conc'])
-    pred_se = sqrt((4*quant_regression['r_sq'] * (1 - quant_regression['r_sq'])**2 * (quant_regression['n'] - 2)**2)/((quant_regression['n']**2 - 1) * (quant_regression['n'] + 3)))
+    pred_se = np.sqrt((4*quant_regression['r_sq'] * (1 - quant_regression['r_sq'])**2 * (quant_regression['n'] - 2)**2)/((quant_regression['n']**2 - 1) * (quant_regression['n'] + 3)))
     pred_se_up = quant_regression['r_sq'] + pred_se
     pred_se_low = quant_regression['r_sq'] - pred_se
 
