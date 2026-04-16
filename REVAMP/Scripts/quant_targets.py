@@ -683,10 +683,10 @@ if __name__ == "__main__":
     parser.add_argument('--quad-reg2', nargs=4, required=True, help='Path to read depth variability model for 10-100 reads/bp')
     parser.add_argument('--quad-reg3', nargs=4, required=True, help='Path to read depth variability model for 100-1000 reads/bp')
     parser.add_argument('--quad-reg4', nargs=4, required=True, help='Path to read depth variability model for 1000+ reads/bp')
-    parser.add_argument('cutoff-function1', nargs=4, required=True, help='Paths to RMSE threshold function for 0-10 reads/bp')
-    parser.add_argument('cutoff-function2', nargs=4, required=True, help='Paths to RMSE threshold function for 10-100 reads/bp')
-    parser.add_argument('cutoff-function3', nargs=4, required=True, help='Paths to RMSE threshold function for 100-1000 reads/bp')
-    parser.add_argument('cutoff-function4', nargs=4, required=True, help='Paths to RMSE threshold function for 1000+ reads/bp')
+    parser.add_argument('--cutoff-function1', nargs=4, required=True, help='Paths to RMSE threshold function for 0-10 reads/bp')
+    parser.add_argument('--cutoff-function2', nargs=4, required=True, help='Paths to RMSE threshold function for 10-100 reads/bp')
+    parser.add_argument('--cutoff-function3', nargs=4, required=True, help='Paths to RMSE threshold function for 100-1000 reads/bp')
+    parser.add_argument('--cutoff-function4', nargs=4, required=True, help='Paths to RMSE threshold function for 1000+ reads/bp')
 
     args = parser.parse_args()
 
