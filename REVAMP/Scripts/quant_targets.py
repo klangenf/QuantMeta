@@ -6,8 +6,6 @@ This script quantifies unknown targets in metagenomic data by:
 1. Assessing detection thresholds for standards
 2. Correcting for non-specific mapping artifacts
 3. Converting relative abundances to absolute concentrations
-
-Based on the original quant_unknowns.R script.
 """
 
 import pandas as pd
@@ -433,9 +431,9 @@ def compute_gc(seq_array):
 def compute_avg_depth(depth_array):
     return(sum(depth_array)/len(depth_array))
 
-def quant_correct_analysis(sample_name, descript, mapping_results, results, window_size=49, 
-                           quad_reg1_path, quad_reg2_path, quad_reg3_path, quad_reg4_path, 
-                           cutoff_function1_path, cutoff_function2_path, cutoff_function3_path, cutoff_function4_path):
+def quant_correct_analysis(sample_name, descript, mapping_results, results,quad_reg1_path, 
+                           quad_reg2_path, quad_reg3_path, quad_reg4_path, cutoff_function1_path, 
+                           cutoff_function2_path, cutoff_function3_path, cutoff_function4_path, window_size=49):
     """
     Main correction function that orchestrates non-specific mapping detection and correction.
 
@@ -577,9 +575,9 @@ def prediction(mapping, DNA_input, DNA_conc):
     return result
 
 def quant_unknown(sample_name, target_name, database_lengths, mapping_results_path, E_detect_model_path,
-                  window_size=49, quad_reg1_path, quad_reg2_path, quad_reg3_path, quad_reg4_path,
+                  quad_reg1_path, quad_reg2_path, quad_reg3_path, quad_reg4_path,
                   cutoff_function1_path, cutoff_function2_path, cutoff_function3_path, cutoff_function4_path,
-                  quant_regression_path, DNA_input, DNA_conc):
+                  quant_regression_path, DNA_input, DNA_conc, window_size=49):
     """
     Main function to quantify unknown targets.
 
@@ -627,7 +625,7 @@ def quant_unknown(sample_name, target_name, database_lengths, mapping_results_pa
 
     mapping = detection_threshold(mapping_results, lengths, detect_thresh)
 
-    output_path = Path('Mapping')/ sample_name / target_name '_mapping_analysis.txt'
+    output_path = Path('Mapping')/ sample_name / f'{target_name}_mapping_analysis.txt'
     output_path.parent.mkdir(parents=True, exist_ok=True)
     mapping.to_csv(output_path, sep='\t', index=False)
 
@@ -636,9 +634,9 @@ def quant_unknown(sample_name, target_name, database_lengths, mapping_results_pa
 
     # Detect and correct read mapping errors
     if len(mapping) > 0:
-        mapping = quant_correct_analysis(sample_name, target_name, mapping_results, mapping, window_size, 
-                                         quad_reg1_path, quad_reg2_path, quad_reg3_path, quad_reg4_path, 
-                                         cutoff_function1_path, cutoff_function2_path, cutoff_function3_path, cutoff_function4_path)
+        mapping = quant_correct_analysis(sample_name, target_name, mapping_results, mapping, quad_reg1_path, 
+                                         quad_reg2_path, quad_reg3_path, quad_reg4_path, cutoff_function1_path, 
+                                         cutoff_function2_path, cutoff_function3_path, cutoff_function4_path, window_size)
 
         # Remove targets that are not quantifiable
         mapping = mapping[mapping['correction_status'].isin(['Accurate'])]
@@ -699,11 +697,11 @@ if __name__ == "__main__":
     DNA_conc = sample_info.loc[sample_info['sample'] == sample_name, 'DNA_Extract_Conc']
 
     results = quant_unknown(sample_name, target_name, args.database_lengths, 
-                            args.mapping_results, args.detect_thresh, args.window_size, 
-                            args.quant_regression, args.mapping_results, args.sliding_window,
-                            args.quad_reg1, args.quad_reg2, args.quad_reg3, args.quad_reg4, 
-                            args.cutoff_function1, args.cutoff_function2, args.cutoff_function3, 
-                            args.cutoff_function4, args.quant_regression, DNA_input, DNA_conc)
+                            args.mapping_results, args.detect_thresh, args.quant_regression, 
+                            args.mapping_results, args.sliding_window, args.quad_reg1, args.quad_reg2, 
+                            args.quad_reg3, args.quad_reg4, args.cutoff_function1, args.cutoff_function2, 
+                            args.cutoff_function3, args.cutoff_function4, args.quant_regression, 
+                            DNA_input, DNA_conc, args.window_size)
 
     print("Quantification complete!")
     print(f"Quantified {len(results)} targets.")
