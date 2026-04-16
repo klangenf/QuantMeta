@@ -478,7 +478,7 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results,quad_
         if len(map_ID) > window_size:
             map_ID = parse_input(map_ID)
             sliding_window = compute_stats(map_ID, window_size=window_size, contig=ID)
-            sliding_window = sliding_window.merge(results[results['ID'] == ID], on='ID', how='left')
+            sliding_window = pd.merge(sliding_window, results, on='ID', how='left')
         else:
             print(f"ID {ID} does not meet length requirement for sliding window analysis.")
             continue
