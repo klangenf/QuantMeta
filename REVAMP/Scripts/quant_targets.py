@@ -107,6 +107,7 @@ def predict_read_var(model, X_new):
             np.log(X_new['gene_copies'])
         ])
         preds = X_fit @ coeffs
+        preds = np.vstack(preds)[:,0]
 
     elif bin_name == 'bin3':
         X_fit = np.column_stack([
@@ -114,16 +115,16 @@ def predict_read_var(model, X_new):
             np.log(X_new['gene_copies'])
         ])
         preds = X_fit @ coeffs
-        preds = np.exp(preds)
+        preds = np.vstack(preds)[:,0]
 
     elif bin_name == 'bin2':
         log_depth = np.log(X_new['gene_copies'])
-        X_fit = np.column_stack([
+        X_fit = np.array([
             X_new['avg_GC']**2, X_new['avg_GC'], np.ones(len(X_new)),
             log_depth**2, log_depth
         ])
         preds = X_fit @ coeffs
-        preds = np.exp(preds) - 1
+        preds = np.vstack(preds)[:,0]
 
     elif bin_name == 'bin1':
         log_depth = np.log(X_new['gene_copies'])
@@ -133,7 +134,7 @@ def predict_read_var(model, X_new):
             X_new['E_rel']**2, X_new['E_rel']
         ])
         preds = X_fit @ coeffs
-        preds = np.exp(preds) - 1
+        preds = np.vstack(preds)[:,0]
 
     return preds
 
@@ -381,26 +382,18 @@ def quant_correction(sample_name, input_info, sliding_window, quad_reg1, quad_re
            input_info.loc[0, 'frac_corrected'] = np.sum(sliding_window['avg_depth'] != sliding_window['initial_avg_depth']) / len(sliding_window)
            
     # Save corrected mapping sliding windows for this target
-    output_dir = Path("Results/{sample_name}/Ind_Correction_Results/{input_info[0, 'ID']}_corrected_mapping.tsv")
+    output_dir = f'Results/{sample_name}/Ind_Correction_Results/{input_info[0, "ID"]}_corrected_mapping.tsv'
+    output_dir = Path(output_dir)
     output_dir.parent.mkdir(parents=True, exist_ok=True)
     sliding_window.to_csv(output_dir, sep='\t', index=False)
 
     return input_info
 
-def parse_input(input):
-    seqs = collections.defaultdict(dict)
-    for ID, group in input.groupby('ID'):
-        seqs[ID] = {
-            "sequence": group['nucleic_acid'].tolist(),
-            "read_depth": group['read_depth'].astype(int).tolist()
-        }
-    return(seqs)
-
 def compute_stats(seq, window_size=49, contig=None):
     stats = []
-    seq_array = seq["sequence"]
-    depth_array = seq["read_depth"]
-    seq_len = len(seq_array)
+    seq_array = seq['nucleic_acid']
+    depth_array = seq['read_depth']
+    seq_len = seq.shape[0]
 
     # check if seq is greater than sliding window
     if seq_len < window_size:
@@ -419,7 +412,7 @@ def compute_stats(seq, window_size=49, contig=None):
     return(stats)
     
 def compute_gc(seq_array):
-    return((seq_array.count("C") + seq_array.count("G")) / len(seq_array))
+    return((seq_array.str.count('C') + seq_array.str.count('G')) / len(seq_array))
 
 def compute_avg_depth(depth_array):
     return(sum(depth_array)/len(depth_array))
@@ -476,8 +469,7 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results,quad_
     for ID in results['ID'].unique():
         map_ID = mapping_results[mapping_results['ID'] == ID]
         if len(map_ID) > window_size:
-            map_ID = parse_input(map_ID)
-            sliding_window = compute_stats(map_ID, window_size=window_size, contig=ID)
+            sliding_window = pd.DataFrame(compute_stats(map_ID, window_size=window_size, contig=ID), columns=['ID', 'avg_GC', 'avg_depth'])
             sliding_window = pd.merge(sliding_window, results, on='ID', how='left')
         else:
             print(f"ID {ID} does not meet length requirement for sliding window analysis.")
@@ -485,7 +477,7 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results,quad_
         
         # Calculate RMSE and RMSE limit for the target
         depth = results[results['ID'] == ID]['gene_copies'].iloc[0]
-        
+
         if depth < 10 and quad_reg1 is not None:
             pred = predict_read_var(quad_reg1, sliding_window[['avg_GC', 'gene_copies', 'E_rel']])
             pred = np.exp(pred) - 1
@@ -504,7 +496,7 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results,quad_
         else:
             continue
 
-        rmse = np.sqrt(np.sum((pred - sliding_window['avg_depth'])**2) / len(sliding_window))
+        rmse = np.sqrt(np.sum((pred - sliding_window['avg_depth'])**2) / sliding_window.shape[0])
         results[results['ID'] == ID]['RMSE'] = rmse
         results[results['ID'] == ID]['RMSE_limit'] = RMSE_limit
 
@@ -532,8 +524,9 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results,quad_
     results.loc[(results['status'] == 'needs_correction') & (results['frac_corrected'] > 0.2 | results['cycle'] > 20 | results['RMSE'] > results['RMSE_limit'] | results['gene_copies'] == 0), 'correction_results'] = 'Review'
 
     # Save results
-    output_dir = Path("Results/{sample_name}/Ind_Correction_Results/{descript}_corrected_results.tsv")
-    output_dir.parent.mkdir(parents=True, exist_ok=True)   
+    output_dir = f'Results/{sample_name}/Ind_Correction_Results/{descript}_corrected_results.tsv'
+    output_dir = Path(output_dir)
+    output_dir.parent.mkdir(parents=True, exist_ok=True)
     results.to_csv(output_dir, sep='\t', index=False)
 
     return results
@@ -604,7 +597,8 @@ def quant_unknown(sample_name, target_name, database_lengths, mapping_results_pa
     --------
     pd.DataFrame : Final quantification results
     """
-    output_dir = Path("Results/{sample_name}/{target_name}_concentrations.tsv")
+    output_dir = f'Results/{sample_name}/{target_name}_concentrations.tsv'
+    output_dir = Path(output_dir)
     output_dir.parent.mkdir(parents=True, exist_ok=True)
 
     # Load sequence lengths
