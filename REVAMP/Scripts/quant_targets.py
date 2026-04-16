@@ -693,13 +693,12 @@ if __name__ == "__main__":
     sample_name = args.sample_name
     target_name = args.target_name
     sample_info = pd.read_csv(args.sample_info, sep='\t', header=0)
-    DNA_input = sample_info.loc[sample_info['sample'] == sample_name, 'Library_Mass']
-    DNA_conc = sample_info.loc[sample_info['sample'] == sample_name, 'DNA_Extract_Conc']
+    DNA_input = sample_info.loc[sample_info['Sample'] == sample_name, 'Library_Mass']
+    DNA_conc = sample_info.loc[sample_info['Sample'] == sample_name, 'DNA_Extract_Conc']
 
-    results = quant_unknown(sample_name, target_name, args.database_lengths, 
-                            args.mapping_results, args.detect_thresh, args.quant_regression, 
-                            args.mapping_results, args.sliding_window, args.quad_reg1, args.quad_reg2, 
-                            args.quad_reg3, args.quad_reg4, args.cutoff_function1, args.cutoff_function2, 
+    results = quant_unknown(sample_name, target_name, args.database_lengths, args.mapping_results, 
+                            args.detect_thresh, args.quad_reg1, args.quad_reg2, args.quad_reg3, 
+                            args.quad_reg4, args.cutoff_function1, args.cutoff_function2, 
                             args.cutoff_function3, args.cutoff_function4, args.quant_regression, 
                             DNA_input, DNA_conc, args.window_size)
 
