@@ -77,6 +77,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+bowtie2-build -f $standards Map_Indexes/standards
+bioawk -c fastx '{{ print $name, length($seq) }}' < $test > Map_Indexes/${test_name}_lengths.txt
 
 # Get number of samples
 num_samples=$(wc -l < "$config")
