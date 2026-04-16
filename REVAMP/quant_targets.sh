@@ -14,6 +14,7 @@ cd "$BASE_DIR"
 
 # Default values
 config="Config/sample_list.txt"
+spike_info="Config/spike_in_info.txt"
 targets=""
 targets_bam_dir="Mapping/"
 target_name=""
@@ -37,6 +38,7 @@ Usage: $0 [OPTIONS]
 
 Options:
   -c, --config FILE               Config file of samples (default: Config/sample_list.txt)
+  -s, --spike-info FILE           Table of spike-in information (Sample, Library Mass, DNA Concentration, Spike-in Fraction, ssDNA Fraction) (default: Config/spike_in_info.txt)
   -T, --targets FILE              Fasta file with target sequences (default: none, required)
   -Tb, --targets-bam-dir DIR      Directory containing sorted bam files of mapping reads to target database named as {sample_name}_{target_name}_sorted.bam (default: Mapping/)
   -N, --target-name NAME          Name for target database (default: none, required, used for naming output files)
@@ -65,6 +67,7 @@ exit 1
 while [[ $# -gt 0 ]]; do
   case $1 in
     -c|--config) config="$2"; shift 2 ;;
+    -s|--spike-info) spike_info="$2"; shift 2 ;;
     -T|--targets) targets="$2"; shift 2 ;;
     -Tb|--targets-bam-dir) targets_bam_dir="$2"; shift 2 ;;
     -N|--target-name) target_name="$2"; shift 2 ;;
@@ -92,4 +95,4 @@ bioawk -c fastx '{{ print $name, length($seq) }}' < $targets > Map_Indexes/${tar
 num_samples=$(wc -l < "$config")
 
 # Run analysis for each sample in parallel (up to $cores at a time)
-seq 0 $((num_samples - 1)) | xargs -n 1 -P "$cores" -I {} bash -c 'bash Scripts/quant_targets_unknown.sh "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "$10" "$11" "$12" "$13" "$14" "$15"' _ {} "$config" "$targets_bam_dir" "$targets" "$target_name" "$window_size" "$detect" "$read_depth_variability_model1" "$read_depth_variability_model2" "$read_depth_variability_model3" "$read_depth_variability_model4" "$rmse_cutoff_function1" "$rmse_cutoff_function2" "$rmse_cutoff_function3" "$rmse_cutoff_function4"
+seq 0 $((num_samples - 1)) | xargs -n 1 -P "$cores" -I {} bash -c 'bash Scripts/quant_targets_unknown.sh "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "$10" "$11" "$12" "$13" "$14" "$15" "$16"' _ {} "$config" "$targets_bam_dir" "$targets" "$target_name" "$window_size" "$detect" "$read_depth_variability_model1" "$read_depth_variability_model2" "$read_depth_variability_model3" "$read_depth_variability_model4" "$rmse_cutoff_function1" "$rmse_cutoff_function2" "$rmse_cutoff_function3" "$rmse_cutoff_function4" "$spike_info"

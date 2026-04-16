@@ -678,7 +678,7 @@ if __name__ == "__main__":
     parser.add_argument('--mapping-results', required=True, help='Path to mapping results file')
     parser.add_argument('--window-size', type=int, default=49, help='Size of sliding window for correction analysis')
     parser.add_argument('--quant-regression', required=True, help='Path to quantification regression model')
-    parser.add_argument('--detect-thresh', type=float, required=True, help='Detection threshold')
+    parser.add_argument('--detect-thresh', nargs=4, required=True, help='Path to detection threshold')
     parser.add_argument('--quad-reg1', nargs=4, required=True, help='Path to read depth variability model for 0-10 reads/bp')
     parser.add_argument('--quad-reg2', nargs=4, required=True, help='Path to read depth variability model for 10-100 reads/bp')
     parser.add_argument('--quad-reg3', nargs=4, required=True, help='Path to read depth variability model for 100-1000 reads/bp')
