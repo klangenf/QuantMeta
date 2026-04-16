@@ -389,9 +389,9 @@ def quant_correction(sample_name, input_info, sliding_window, quad_reg1, quad_re
 
 def parse_input(input):
     seqs = collections.defaultdict(dict)
-    for contig_id, group in input.groupby('contig_id'):
-        seqs[contig_id] = {
-            "sequence": group['nuc_acid'].tolist(),
+    for ID, group in input.groupby('ID'):
+        seqs[ID] = {
+            "sequence": group['nucleic_acid'].tolist(),
             "read_depth": group['read_depth'].astype(int).tolist()
         }
     return(seqs)
