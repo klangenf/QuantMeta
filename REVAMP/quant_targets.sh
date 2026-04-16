@@ -92,4 +92,4 @@ bioawk -c fastx '{{ print $name, length($seq) }}' < $targets > Map_Indexes/${tar
 num_samples=$(wc -l < "$config")
 
 # Run analysis for each sample in parallel (up to $cores at a time)
-seq 0 $((num_samples - 1)) | xargs -n 1 -P "$cores" -I {} bash -c 'bash Scripts/quant_targets_unknown.sh "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "$10" "$11" "$12" "$13" "$14" "$15"' _ {} "$config" "$targets_bam_dir" "$targets" "$target_name" "$window_size" "$detect" "$rdv1" "$rdv2" "$rdv3" "$rdv4" "$rmse1" "$rmse2" "$rmse3" "$rmse4"
+seq 0 $((num_samples - 1)) | xargs -n 1 -P "$cores" -I {} bash -c 'bash Scripts/quant_targets_unknown.sh "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "$10" "$11" "$12" "$13" "$14" "$15"' _ {} "$config" "$targets_bam_dir" "$targets" "$target_name" "$window_size" "$detect" "$read_depth_variability_model1" "$read_depth_variability_model2" "$read_depth_variability_model3" "$read_depth_variability_model4" "$rmse_cutoff_function1" "$rmse_cutoff_function2" "$rmse_cutoff_function3" "$rmse_cutoff_function4"
