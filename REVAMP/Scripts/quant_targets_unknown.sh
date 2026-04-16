@@ -19,4 +19,4 @@ samtools depth -a -H $bam --reference $4 > tmp/${sample}/${5}_depth.txt
 python3 Scripts/organize_mapping.py -d tmp/${sample}/${5}_depth.txt -f $4 -o Mapping/${sample}/${5}_mapping.txt
 
 ### Run quantification script
-python3 Scripts/quant_targets.py --sample_name $sample --target_name $5 --sample_info $16 --database_lengths Map_Indexes/${5}_lengths.txt --mapping_results Mapping/${sample}/${5}_mapping.txt --window_size $6 --quant_regression Regressions/quantification/${sample}_rel_to_abs.pkl --detect_thresh $7 --quad_reg1 $8 --quad_reg2 $9 --quad_reg3 $10 --quad_reg4 $11 --cutoff_function1 $12 --cutoff_function2 $13 --cutoff_function3 $14 --cutoff_function4 $15
+python3 Scripts/quant_targets.py --sample_name $sample --target_name $5 --sample_info ${16} --database_lengths Map_Indexes/${5}_lengths.txt --mapping_results Mapping/${sample}/${5}_mapping.txt --window_size $6 --quant_regression Regressions/quantification/${sample}_rel_to_abs.pkl --detect_thresh $7 --quad_reg1 $8 --quad_reg2 $9 --quad_reg3 ${10} --quad_reg4 ${11} --cutoff_function1 ${12} --cutoff_function2 ${13} --cutoff_function3 ${14} --cutoff_function4 ${15}
