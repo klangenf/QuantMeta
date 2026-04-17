@@ -461,8 +461,8 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results,quad_
     cutoff_function3 = load_pickle_model(cutoff_function3_path)
     cutoff_function4 = load_pickle_model(cutoff_function4_path)
 
-    results['RMSE'] = 0
-    results['RMSE_limit'] = 0
+    results['RMSE'] = 0.0
+    results['RMSE_limit'] = 0.0
     results['status'] = 'no_correction'
     corrected = pd.DataFrame()
 
@@ -497,8 +497,9 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results,quad_
             continue
 
         rmse = np.sqrt(np.sum((pred - sliding_window['avg_depth'])**2) / sliding_window.shape[0])
-        results[results['ID'] == ID]['RMSE'] = rmse
-        results[results['ID'] == ID]['RMSE_limit'] = RMSE_limit
+        print("RMSE =", rmse, "RMSE_limit =", RMSE_limit)
+        results.loc[(results['ID'] == ID), 'RMSE'] = rmse
+        results.loc[(results['ID'] == ID), 'RMSE_limit'] = RMSE_limit
 
     # Apply correction if RMSE exceeds limit (based on average read depth)
     if results[results['ID'] == ID]['RMSE'].iloc[0] > results[results['ID'] == ID]['RMSE_limit'].iloc[0]:
@@ -512,7 +513,7 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results,quad_
 
     results = results[['ID', 'RMSE', 'RMSE_limit', 'gene_copies', 'status']]
     results['initial_gene_copies'] = results['gene_copies']
-    results['frac_corrected'] = 0
+    results['frac_corrected'] = 0.0
     results['cycle'] = 0
     
     if len(corrected) > 0:
@@ -521,7 +522,7 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results,quad_
 
     # Add reliability assessment
     results['reliability'] = 'High RMSE'
-    results[results['RMSE'] <= results['RMSE_limit']]['reliability'] = 'Low RMSE'
+    results.loc[(results['RMSE'] <= results['RMSE_limit']), 'reliability'] = 'Low RMSE'
 
     results['correction_results'] = 'Accurate'
     mask = "status == 'needs_correction' and (frac_corrected > 0.2 or cycle > 20 or RMSE > RMSE_limit or gene_copies == 0)"
@@ -631,7 +632,7 @@ def quant_unknown(sample_name, target_name, database_lengths, mapping_results_pa
                                          cutoff_function2_path, cutoff_function3_path, cutoff_function4_path, window_size)
 
         # Remove targets that are not quantifiable
-        mapping = mapping[mapping['correction_status'].isin(['Accurate'])]
+        mapping = mapping[mapping['correction_results'].isin(['Accurate'])]
     else:
         print("No targets above detection and quantifiable!")
         pd.DataFrame({"message": ["No targets above detection and quantifiable!"]}).to_csv(output_dir, index=False, header=False)

@@ -20,13 +20,15 @@ samtools depth -a -H tmp/${sample}/standards_sorted.bam --reference $3 > tmp/${s
 python3 Scripts/organize_mapping.py -d tmp/${sample}/standards_depth.txt -f $3 -o Mapping/${sample}_100/standards_mapping.txt
 
 ### Downsample reads and repeat mapping to standards
-read_count=$((wc -l < $reads_1)/4 | bc)
+read_count=$(($(zcat $reads_1 | wc -l) / 4))
+echo $read_count
 
-for downsample in 1,10; do
+for downsample in 1 10; do
     out_r1="tmp/${sample}_${downsample}_R1.fastq.gz"
     out_r2="tmp/${sample}_${downsample}_R2.fastq.gz"
-    seqtk sample -s100 $reads_1 $(($(< $read_count)/(100/${downsample}))) > $out_r1
-    seqtk sample -s100 $reads_2 $(($(< $read_count)/(100/${downsample}))) > $out_r2
+    fraction="$(100 / ${downsample})"
+    seqtk sample -s100 $reads_1 $(($(< ${read_count}) / ${fraction})) > $out_r1
+    seqtk sample -s100 $reads_2 $(($(< ${read_count}) / ${fraction})) > $out_r2
     mkdir tmp/${sample}_${downsample}
     mkdir Mapping/${sample}_${downsample}
     bowtie2 -x Map_Indexes/standards -q -1 $out_r1 -2 $out_r2 -S tmp/${sample}_${downsample}/standards.sam
@@ -43,13 +45,11 @@ mkdir Map_Indexes/fail_standards_r2
 mkdir Map_Indexes/fail_standards_r3
 mkdir Map_Indexes/fail_standards_r4
 mkdir Map_Indexes/fail_standards_r5
-mutation-simulator $3 args -sn 0.1 -in 0.02 -inl 5 -de 0.02 -del 5 -iv 0.02 -ivl 5 -du 0.02 -dul 5 -tl 0.02 -tll 5 -o Map_Indexes/fail_standards_r1/fail_standards.fasta
-mutation-simulator Map_Indexes/fail_standards_r1/fail_standards.fasta args -sn 0.1 -in 0.02 -inl 5 -de 0.02 -del 5 -iv 0.02 -ivl 5 -du 0.02 -dul 5 -tl 0.02 -tll 5 -o Map_Indexes/fail_standards_r2/fail_standards.fasta
-mutation-simulator Map_Indexes/fail_standards_r2/fail_standards.fasta args -sn 0.1 -in 0.02 -inl 5 -de 0.02 -del 5 -iv 0.02 -ivl 5 -du 0.02 -dul 5 -tl 0.02 -tll 5 -o Map_Indexes/fail_standards_r3/fail_standards.fasta
-mutation-simulator Map_Indexes/fail_standards_r3/fail_standards.fasta args -sn 0.1 -in 0.02 -inl 5 -de 0.02 -del 5 -iv 0.02 -ivl 5 -du 0.02 -dul 5 -tl 0.02 -tll 5 -o Map_Indexes/fail_standards_r4/fail_standards.fasta
-mutation-simulator Map_Indexes/fail_standards_r4/fail_standards.fasta args -sn 0.1 -in 0.02 -inl 5 -de 0.02 -del 5 -iv 0.02 -ivl 5 -du 0.02 -dul 5 -tl 0.02 -tll 5 -o Map_Indexes/fail_standards_r5/fail_standards.fasta
-
-for fail_set in r1 r2 r3 r4 r5; do
+mutation-simulator -o Map_Indexes/fail_standards_r1/fail_standards.fasta $3 args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5 
+mutation-simulator -o Map_Indexes/fail_standards_r2/fail_standards.fasta Map_Indexes/fail_standards_r1/fail_standards.fasta args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5 
+mutation-simulator -o Map_Indexes/fail_standards_r3/fail_standards.fasta Map_Indexes/fail_standards_r2/fail_standards.fasta args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5 
+mutation-simulator -o Map_Indexes/fail_standards_r4/fail_standards.fasta Map_Indexes/fail_standards_r3/fail_standards.fasta args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5 
+mutation-simulator -o Map_Indexes/fail_standards_r5/fail_standards.fasta Map_Indexes/fail_standards_r4/fail_standards.fasta args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5 
     bioawk -c fastx '{{ print $name, length($seq) }}' < Map_Indexes/fail_standards_${fail_set}/fail_standards.fasta > Map_Indexes/fail_standards_${fail_set}/fail_standards_lengths.txt
     bowtie2-build -f Map_Indexes/fail_standards_${fail_set}/fail_standards.fasta Map_Indexes/fail_standards_${fail_set}/fail_standards
     bowtie2 -x Map_Indexes/fail_standards_${fail_set}/fail_standards -q -1 $reads_1 -2 $reads_2 -S tmp/${sample}/fail_standards_${fail_set}.sam
