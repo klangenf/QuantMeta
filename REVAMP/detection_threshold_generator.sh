@@ -80,6 +80,23 @@ done
 bowtie2-build -f $standards Map_Indexes/standards
 bioawk -c fastx '{{ print $name, length($seq) }}' < $test > Map_Indexes/${test_name}_lengths.txt
 
+### Curate failure standards (negative controls) and map reads to them
+mkdir Map_Indexes/fail_standards_r1
+mkdir Map_Indexes/fail_standards_r2
+mkdir Map_Indexes/fail_standards_r3
+mkdir Map_Indexes/fail_standards_r4
+mkdir Map_Indexes/fail_standards_r5
+mutation-simulator -o Map_Indexes/fail_standards_r1/fail_standards $standards args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5 
+mutation-simulator -o Map_Indexes/fail_standards_r2/fail_standards Map_Indexes/fail_standards_r1/fail_standards_ms.fasta args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5 
+mutation-simulator -o Map_Indexes/fail_standards_r3/fail_standards Map_Indexes/fail_standards_r2/fail_standards_ms.fasta args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5 
+mutation-simulator -o Map_Indexes/fail_standards_r4/fail_standards Map_Indexes/fail_standards_r3/fail_standards_ms.fasta args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5 
+mutation-simulator -o Map_Indexes/fail_standards_r5/fail_standards Map_Indexes/fail_standards_r4/fail_standards_ms.fasta args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5
+
+for fail_set in r1 r2 r3 r4 r5; do
+    bioawk -c fastx '{{ print $name, length($seq) }}' < Map_Indexes/fail_standards_${fail_set}/fail_standards_ms.fasta > Map_Indexes/fail_standards_${fail_set}/fail_standards_lengths.txt
+    bowtie2-build -f Map_Indexes/fail_standards_${fail_set}/fail_standards_ms.fasta Map_Indexes/fail_standards_${fail_set}/fail_standards
+done
+
 # Get number of samples
 num_samples=$(wc -l < "$config")
 
