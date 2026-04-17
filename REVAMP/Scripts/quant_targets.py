@@ -119,7 +119,7 @@ def predict_read_var(model, X_new):
 
     elif bin_name == 'bin2':
         log_depth = np.log(X_new['gene_copies'])
-        X_fit = np.array([
+        X_fit = np.column_stack([
             X_new['avg_GC']**2, X_new['avg_GC'], np.ones(len(X_new)),
             log_depth**2, log_depth
         ])
