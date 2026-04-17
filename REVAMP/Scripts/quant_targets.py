@@ -507,13 +507,13 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results,quad_
                                       quad_reg1, quad_reg2, quad_reg3, quad_reg4, cutoff_function1, 
                                       cutoff_function2, cutoff_function3, cutoff_function4)
 
-    results = results.subset(~results['ID'].isin(corrected['ID']))
-    results = results.subset(results['ID', 'RMSE', 'RMSE_limit', 'gene_copies', 'status'])
+    results = results[~results['ID'].isin(corrected['ID'])]
+    results = results[['ID', 'RMSE', 'RMSE_limit', 'gene_copies', 'status']]
     results['initial_gene_copies'] = results['gene_copies']
     results['frac_corrected'] = 0
     results['cycle'] = 0
     
-    corrected = corrected.subset(corrected['ID', 'RMSE', 'RMSE_limit', 'gene_copies', 'status', 'initial_gene_copies', 'frac_corrected', 'cycle'])
+    corrected = corrected[['ID', 'RMSE', 'RMSE_limit', 'gene_copies', 'status', 'initial_gene_copies', 'frac_corrected', 'cycle']]
     results = pd.concat([results, corrected], ignore_index=True)
 
     # Add reliability assessment
