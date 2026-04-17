@@ -524,7 +524,9 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results,quad_
     results[results['RMSE'] <= results['RMSE_limit']]['reliability'] = 'Low RMSE'
 
     results['correction_results'] = 'Accurate'
-    results.loc[(results['status'] == 'needs_correction') & (results['frac_corrected'] > 0.2 | results['cycle'] > 20 | results['RMSE'] > results['RMSE_limit'] | results['gene_copies'] == 0), 'correction_results'] = 'Review'
+    mask = "status == 'needs_correction' and (frac_corrected > 0.2 or cycle > 20 or RMSE > RMSE_limit or gene_copies == 0)"
+    results.loc[results.query(mask).index, 'correction_results'] = 'Review'
+    #results.loc[(results['status'] == 'needs_correction') & ((results['frac_corrected'] > 0.2) | (results['cycle'] > 20) | (results['RMSE'] > results['RMSE_limit']) | (results['gene_copies'] == 0)), 'correction_results'] = 'Review'
 
     # Save results
     output_dir = f'Results/{sample_name}/Ind_Correction_Results/{descript}_corrected_results.tsv'
