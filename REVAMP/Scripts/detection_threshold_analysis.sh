@@ -43,8 +43,8 @@ for fail_set in r1 r2 r3 r4 r5; do
     samtools view -S -b tmp/${sample}/fail_standards_${fail_set}.sam > tmp/${sample}/fail_standards_${fail_set}.bam
     samtools sort tmp/${sample}/fail_standards_${fail_set}.bam -o tmp/${sample}/fail_standards_${fail_set}_sorted.bam
     samtools index tmp/${sample}/fail_standards_${fail_set}_sorted.bam
-    samtools depth -a -H tmp/${sample}/fail_standards_${fail_set}_sorted.bam --reference Map_Indexes/fail_standards_${fail_set}/fail_standards.fasta > tmp/${sample}/fail_standards_${fail_set}_depth.txt
-    python3 Scripts/organize_mapping.py -d tmp/${sample}/fail_standards_${fail_set}_depth.txt -f Map_Indexes/fail_standards_${fail_set}/fail_standards.fasta -o Mapping/${sample}/fail_standards_${fail_set}_mapping.txt
+    samtools depth -a -H tmp/${sample}/fail_standards_${fail_set}_sorted.bam --reference Map_Indexes/fail_standards_${fail_set}/fail_standards_ms.fasta > tmp/${sample}/fail_standards_${fail_set}_depth.txt
+    python3 Scripts/organize_mapping.py -d tmp/${sample}/fail_standards_${fail_set}_depth.txt -f Map_Indexes/fail_standards_${fail_set}/fail_standards_ms.fasta -o Mapping/${sample}/fail_standards_${fail_set}_mapping.txt
 done
 
 ### Map reads to test database

@@ -301,9 +301,7 @@ def quant_correction(sample_name, input_info, sliding_window, quad_reg1, quad_re
            
            # Identify mapping error regions
            sliding_window['error_region'] = 'FALSE'
-           sliding_window[(sliding_window['avg_depth'] != 0)& 
-                          ((sliding_window['avg_depth'] > upper) | 
-                           (sliding_window['avg_depth'] < lower)), 'error_region'] = 'TRUE'
+           sliding_window.loc[((sliding_window['avg_depth'] != 0.0) & ((sliding_window['avg_depth'] > upper) | (sliding_window['avg_depth'] < lower))), 'error_region'] = 'TRUE'
            
            # Recalculate average depth excluding error regions
            specific_regions = sliding_window[sliding_window['error_region'] == 'FALSE']
