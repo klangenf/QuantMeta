@@ -48,7 +48,7 @@ for fail_set in r1 r2 r3 r4 r5; do
 done
 
 ### Map reads to test database
-samtools depth -a -H $7 --reference $5 > tmp/${sample}/${4}_depth.txt
+samtools depth -a -H $7/${sample}_${4}_sorted.bam --reference $5 > tmp/${sample}/${4}_depth.txt
 python3 Scripts/organize_mapping.py -d tmp/${sample}/${4}_depth.txt -f $5 -o Mapping/${sample}/${4}_mapping.txt
 
 echo done
