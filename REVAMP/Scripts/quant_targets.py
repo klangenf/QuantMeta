@@ -337,10 +337,13 @@ def quant_correction(sample_name, input_info, sliding_window, quad_reg1, quad_re
            # Ensure non-negative bounds
            lower = np.maximum(lower, 0)
            upper = np.maximum(upper, 0)
-           
+
+           temp = pd.concat([sliding_window, pd.DataFrame({'lower': lower, 'upper': upper})], axis=1)
+           #temp.columns = list(sliding_window.columns) + ['lower', 'upper']
+
            # Apply corrections
            sliding_window.loc[sliding_window['error_region'] == 'TRUE', 'avg_depth'] = \
-            np.clip(sliding_window.loc[sliding_window['error_region'] == 'TRUE', 'avg_depth'], lower, upper)
+            np.clip(sliding_window.loc[sliding_window['error_region'] == 'TRUE', 'avg_depth'], temp.loc[temp['error_region'] == 'TRUE', 'lower'], temp.loc[temp['error_region'] == 'TRUE', 'upper'])
            
            # Update total average depth
            sliding_window['gene_copies'] = sliding_window['avg_depth'].mean()
