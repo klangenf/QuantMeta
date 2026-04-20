@@ -47,13 +47,13 @@ def mapping_analysis(mapping_results, target_lengths, min_coverage, min_distribu
 
     # Start with unique IDs and merge lengths
     targets = pd.DataFrame({'ID': mapping_results['ID'].unique()})
-    targets = targets.merge(target_lengths[['ID', 'length']], on='ID', how='left')
+    targets = pd.merge(targets, target_lengths, on='ID', how='left')
     
     # Group mapping_results by ID for efficient aggregation
     grouped = mapping_results.groupby('ID')
     
     # Compute basic aggregations
-    cover_count = (grouped['read_depth'] > 0).sum()
+    cover_count = grouped['read_depth'].agg(lambda x: (x > 0).sum())
     B_G = grouped['read_depth'].sum()
     gene_copies = grouped['read_depth'].mean()
     
@@ -68,11 +68,11 @@ def mapping_analysis(mapping_results, target_lengths, min_coverage, min_distribu
         return 0.0
     
     I_G = grouped.apply(compute_I_G)
-    
+
     # Merge aggregated results into targets
-    targets = targets.merge(
+    targets = pd.merge(targets,
         pd.DataFrame({
-            'ID': cover_count.index,
+            'ID': B_G.index,
             'cover_count': cover_count.values,
             'B_G': B_G.values,
             'gene_copies': gene_copies.values,
@@ -92,15 +92,6 @@ def mapping_analysis(mapping_results, target_lengths, min_coverage, min_distribu
     )
     
     return targets
-
-def load_or_default_sample_list(sample_file):
-    if sample_file and Path(sample_file).exists():
-        return pd.read_csv(sample_file, sep='\t')
-
-    # fallback defaults (example)
-    return pd.DataFrame({
-        'sample': ['example_1', 'example_2']
-    })
 
 def find_optimal_cutpoint(y_true, y_scores, n_boot=1000):
     """
@@ -168,17 +159,23 @@ def main():
     parser.add_argument('--ssDNA-std-file', default=None, help='Optional table of ssDNA standards (ID, Mass, Rel_Abund, length)')
     parser.add_argument('--min-coverage', type=float, default=0.1, help='Minimum read coverage threshold for detection')
     parser.add_argument('--min-distribution', type=float, default=0.3, help='Minimum observed/Poisson distributed read distribution threshold for detection')
-    parser.add_argument('--test-database', default='RefSeq_Viruses', help='Read mapping to a test dataset with a range of relevant target lengths')
+    parser.add_argument('--test-database', default=None, help='Read mapping to a test dataset with a range of relevant target lengths')
+    
     args = parser.parse_args()
 
-    sample_names = load_or_default_sample_list(args.sample_file)
+    sample_names = pd.read_csv(args.sample_file, sep='\t', header = None)
+    sample_names.columns = ['sample']
+
+    samples = []
     
-    for sample in sample_names:
+    for sample in sample_names['sample']:
         for ds in [1, 10, 100]:
             samples.append({'sample': sample, 'downsample': ds})
     samples = pd.DataFrame(samples)
 
-    for sample in sample_names:
+    fail_samples = []
+
+    for sample in sample_names['sample']:
         for fail_set in ['fail_standards_r1', 'fail_standards_r2', 'fail_standards_r3', 'fail_standards_r4', 'fail_standards_r5']:
             fail_samples.append({'sample': sample, 'fail_set': fail_set})
     fail_samples = pd.DataFrame(fail_samples)
@@ -206,13 +203,16 @@ def main():
             continue
 
         mapping_out = pd.read_csv(mapping_path, sep='\t')
-        out_logit, out_map = mapping_analysis(mapping_out, stds_list, min_coverage, min_distribution)
-        out_logit['downsample'] = downsample
-        out_logit['sample'] = sample_name
-        out_map['downsample'] = downsample
-        out_map['sample'] = sample_name
-        logit.append(out_logit)
-        mapping_results.append(out_map)
+
+        if mapping_out.empty == False:
+            out_logit = mapping_analysis(mapping_out, stds_list, min_coverage, min_distribution)
+            out_map = out_logit.copy()
+            out_logit['downsample'] = downsample
+            out_logit['sample'] = sample_name
+            out_map['downsample'] = downsample
+            out_map['sample'] = sample_name
+            logit.append(out_logit)
+            mapping_results.append(out_map)
 
     logit = pd.concat(logit, ignore_index=True) if logit else pd.DataFrame()
     mapping_results = pd.concat(mapping_results, ignore_index=True) if mapping_results else pd.DataFrame()
@@ -230,15 +230,18 @@ def main():
             continue
 
         mapping_out = pd.read_csv(mapping_path, sep='\t')
-        fail_lengths = pd.read_csv(f"Map_Indexes/{fail_set}/fail_standards_lengths.txt", sep='\t')
 
-        out_logit, out_map = mapping_analysis(mapping_out, fail_lengths, min_coverage, min_distribution)
-        out_logit['ID'] = list(map(lambda x: f"{x}_{fail_set}", out_logit['ID']))
-        out_logit['sample'] = sample_name
-        out_map['ID'] = list(map(lambda x: f"{x}_{fail_set}", out_map['ID']))
-        out_map['sample'] = sample_name
-        fail_logit.append(out_logit)
-        fail_mapping_results.append(out_map)
+        if mapping_out.empty == False:
+            fail_lengths = pd.read_csv(f"Map_Indexes/{fail_set}/fail_standards_lengths.txt", sep='\t')
+            fail_lengths.columns = ['ID', 'length']
+            out_logit = mapping_analysis(mapping_out, fail_lengths, min_coverage, min_distribution)
+            out_map = out_logit.copy()
+            out_logit['ID'] = list(map(lambda x: f"{x}_{fail_set}", out_logit['ID']))
+            out_logit['sample'] = sample_name
+            out_map['ID'] = list(map(lambda x: f"{x}_{fail_set}", out_map['ID']))
+            out_map['sample'] = sample_name
+            fail_logit.append(out_logit)
+            fail_mapping_results.append(out_map)
 
     fail_logit = pd.concat(fail_logit, ignore_index=True) if fail_logit else pd.DataFrame()
     fail_mapping_results = pd.concat(fail_mapping_results, ignore_index=True) if fail_mapping_results else pd.DataFrame()
@@ -283,7 +286,10 @@ def main():
             continue
 
         mapping_out = pd.read_csv(mapping_path, sep='\t')
-        out_logit, out_map = mapping_analysis(mapping_out, stds_list, min_coverage, min_distribution)
+        test_lengths = pd.read_csv(f"Map_Indexes/{test_db}_lengths.txt", sep='\t')
+        test_lengths.columns = ['ID', 'length']
+        out_logit = mapping_analysis(mapping_out, test_lengths, min_coverage, min_distribution)
+        out_map = out_logit.copy()
         out_logit['downsample'] = 100
         out_logit['sample'] = sample_name
         out_map['downsample'] = 100
@@ -315,7 +321,7 @@ def main():
         for bin_name, thresh in optimal_thresholds.items():
             if thresh is not None:
                 # Calculate midpoint of the bin interval
-                mid_length = ((bin_name.left + bin_name.right) / 2).log10()
+                mid_length = np.log10((bin_name.left + bin_name.right) / 2)
                 lengths.append(mid_length)
                 thresholds.append(thresh)
         

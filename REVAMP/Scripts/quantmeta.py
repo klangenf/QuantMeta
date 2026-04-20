@@ -262,6 +262,8 @@ def main():
         output = Path('Regressions/quantification') / f'{sample_name}_quantmeta_results.txt'
         output.parent.mkdir(parents=True, exist_ok=True)
         results.to_csv(output, sep='\t', index=False)
+        
+        print('✅ Quantification regression custom build complete for sample:', sample_name)
 
 if __name__ == '__main__':
     main()
