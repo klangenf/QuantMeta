@@ -284,12 +284,6 @@ def quant_correction(sample_name, input_info, sliding_window, quad_reg1, quad_re
            input_info['gene_copies'].iloc[0] > 0):
            
            pred = predict_read_var(read_depth_var_model, sliding_window[['avg_GC', 'gene_copies', 'E_rel']])
-           if input_info['gene_copies'].iloc[0] < 100:
-               pred = pred #pred = np.exp(pred) - 1
-           elif input_info['gene_copies'].iloc[0] < 1000:
-               pred = pred # np.exp(pred)
-           else:
-               pred = pred 
            
            sd_mult = np.std(sliding_window['avg_depth'])
            upper = pred + 1.5 * sd_mult
@@ -300,11 +294,11 @@ def quant_correction(sample_name, input_info, sliding_window, quad_reg1, quad_re
            upper = np.maximum(upper, 0)
            
            # Identify mapping error regions
-           sliding_window['error_region'] = 'FALSE'
-           sliding_window.loc[((sliding_window['avg_depth'] != 0.0) & ((sliding_window['avg_depth'] > upper) | (sliding_window['avg_depth'] < lower))), 'error_region'] = 'TRUE'
+           sliding_window['error_region'] = False
+           sliding_window.loc[((sliding_window['avg_depth'] != 0.0) & ((sliding_window['avg_depth'] > upper) | (sliding_window['avg_depth'] < lower))), 'error_region'] = True
            
            # Recalculate average depth excluding error regions
-           specific_regions = sliding_window[sliding_window['error_region'] == 'FALSE']
+           specific_regions = sliding_window.loc[sliding_window['error_region'] == False]
            if len(specific_regions) > 0: 
                sliding_window['gene_copies'] = specific_regions['avg_depth'].mean()
            else:
@@ -322,14 +316,8 @@ def quant_correction(sample_name, input_info, sliding_window, quad_reg1, quad_re
                read_depth_var_model = quad_reg4
 
            pred = predict_read_var(read_depth_var_model, sliding_window[['avg_GC', 'gene_copies', 'E_rel']])
-           if input_info['gene_copies'].iloc[0] < 100:
-               pred = pred #pred = np.exp(pred) - 1
-           elif input_info['gene_copies'].iloc[0] < 1000:
-               pred = pred #pred = np.exp(pred)
-           else:
-               pred = pred 
            
-           specific_depths = sliding_window.loc[sliding_window['error_region'] == 'FALSE', 'avg_depth']
+           specific_depths = sliding_window.loc[sliding_window['error_region'] == False, 'avg_depth']
            sd_mult = np.std(specific_depths) if len(specific_depths) > 0 else 0
            upper = pred + 1.5 * sd_mult
            lower = pred - 1.5 * sd_mult
@@ -342,8 +330,7 @@ def quant_correction(sample_name, input_info, sliding_window, quad_reg1, quad_re
            #temp.columns = list(sliding_window.columns) + ['lower', 'upper']
 
            # Apply corrections
-           sliding_window.loc[sliding_window['error_region'] == 'TRUE', 'avg_depth'] = \
-            np.clip(sliding_window.loc[sliding_window['error_region'] == 'TRUE', 'avg_depth'], temp.loc[temp['error_region'] == 'TRUE', 'lower'], temp.loc[temp['error_region'] == 'TRUE', 'upper'])
+           sliding_window.loc[sliding_window['error_region'] == True, 'avg_depth'] = np.clip(sliding_window.loc[sliding_window['error_region'] == True, 'avg_depth'], temp.loc[temp['error_region'] == True, 'lower'], temp.loc[temp['error_region'] == True, 'upper'])
            
            # Update total average depth
            sliding_window['gene_copies'] = sliding_window['avg_depth'].mean()
@@ -365,12 +352,6 @@ def quant_correction(sample_name, input_info, sliding_window, quad_reg1, quad_re
 
            # Recalculate RMSE and limits
            pred = predict_read_var(read_depth_var_model, sliding_window[['avg_GC', 'gene_copies', 'E_rel']])
-           if input_info['gene_copies'].iloc[0] < 100:
-               pred = pred #pred = np.exp(pred) - 1
-           elif input_info['gene_copies'].iloc[0] < 1000:
-               pred = pred #pred = np.exp(pred)
-           else:
-               pred = pred 
            
            rmse = np.sqrt(np.sum((pred - sliding_window['avg_depth'])**2) / len(sliding_window))
            RMSE_limit = predict_rmse_limit(rmse_threshold_model, input_info['gene_copies'].iloc[0])
@@ -413,12 +394,12 @@ def compute_stats(seq, window_size=49, contig=None):
     return(stats)
     
 def compute_gc(seq_array):
-    return((seq_array.str.count('C') + seq_array.str.count('G')) / len(seq_array))
+    return((seq_array.str.count('C').sum() + seq_array.str.count('G').sum()) / len(seq_array))
 
 def compute_avg_depth(depth_array):
     return(sum(depth_array)/len(depth_array))
 
-def quant_correct_analysis(sample_name, descript, mapping_results, results,quad_reg1_path, 
+def quant_correct_analysis(sample_name, descript, mapping_results, results, quad_reg1_path, 
                            quad_reg2_path, quad_reg3_path, quad_reg4_path, cutoff_function1_path, 
                            cutoff_function2_path, cutoff_function3_path, cutoff_function4_path, window_size=49):
     """
@@ -481,15 +462,12 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results,quad_
 
         if depth < 10 and quad_reg1 is not None:
             pred = predict_read_var(quad_reg1, sliding_window[['avg_GC', 'gene_copies', 'E_rel']])
-            #pred = np.exp(pred) - 1
             RMSE_limit = predict_rmse_limit(cutoff_function1, depth)
         elif 10 <= depth < 100 and quad_reg2 is not None:
             pred = predict_read_var(quad_reg2, sliding_window[['avg_GC', 'gene_copies', 'E_rel']])
-            #pred = np.exp(pred) - 1
             RMSE_limit = predict_rmse_limit(cutoff_function2, depth)
         elif 100 <= depth < 1000 and quad_reg3 is not None:
             pred = predict_read_var(quad_reg3, sliding_window[['avg_GC', 'gene_copies', 'E_rel']])
-            #pred = np.exp(pred)
             RMSE_limit = predict_rmse_limit(cutoff_function3, depth)
         elif depth >= 1000 and quad_reg4 is not None:
             pred = predict_read_var(quad_reg4, sliding_window[['avg_GC', 'gene_copies', 'E_rel']])
@@ -502,12 +480,13 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results,quad_
         results.loc[(results['ID'] == ID), 'RMSE'] = rmse
         results.loc[(results['ID'] == ID), 'RMSE_limit'] = RMSE_limit
 
-    # Apply correction if RMSE exceeds limit (based on average read depth)
-    if results[results['ID'] == ID]['RMSE'].iloc[0] > results[results['ID'] == ID]['RMSE_limit'].iloc[0]:
-        results[results['ID'] == ID]['status'] = 'needs_correction'
-        corrected += quant_correction(sample_name, results[results['ID'] == ID], sliding_window, 
-                                      quad_reg1, quad_reg2, quad_reg3, quad_reg4, cutoff_function1, 
-                                      cutoff_function2, cutoff_function3, cutoff_function4)
+        # Apply correction if RMSE exceeds limit (based on average read depth)
+        if results[results['ID'] == ID]['RMSE'].iloc[0] > results[results['ID'] == ID]['RMSE_limit'].iloc[0]:
+            results.loc[results['ID'] == ID, 'status'] = 'needs_correction'
+            correct = quant_correction(sample_name, results[results['ID'] == ID], sliding_window, 
+                                          quad_reg1, quad_reg2, quad_reg3, quad_reg4, cutoff_function1, 
+                                          cutoff_function2, cutoff_function3, cutoff_function4)
+            corrected = pd.concat([corrected, correct], ignore_index=True)
 
     if len(corrected) > 0:
         results = results[~results['ID'].isin(corrected['ID'])]
