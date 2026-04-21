@@ -537,7 +537,7 @@ def prediction(mapping, DNA_input, DNA_conc):
 
     result = pd.DataFrame({
         'ID': mapping['ID'],
-        'predicted_conc': mapping['gene_copies']*DNA_conc[0]/DNA_input[0]
+        'predicted_conc': mapping['gene_copies']*DNA_conc/DNA_input
     })
 
     return result
@@ -579,10 +579,6 @@ def quant_unknown(sample_name, target_name, database_lengths, mapping_results_pa
     --------
     pd.DataFrame : Final quantification results
     """
-    output_dir = f'Results/{sample_name}/{target_name}_concentrations.tsv'
-    output_dir = Path(output_dir)
-    output_dir.parent.mkdir(parents=True, exist_ok=True)
-
     # Load sequence lengths
     lengths = pd.read_csv(database_lengths, sep='\t', header=None, names=['ID', 'length'])
 
@@ -631,6 +627,9 @@ def quant_unknown(sample_name, target_name, database_lengths, mapping_results_pa
     })
 
     # Save final results
+    output_dir = f'Results/{sample_name}/{target_name}_concentrations.tsv'
+    output_dir = Path(output_dir)
+    output_dir.parent.mkdir(parents=True, exist_ok=True)
     results_final.to_csv(output_dir, sep='\t', index=False)
 
     return results_final
@@ -662,8 +661,8 @@ if __name__ == "__main__":
     sample_name = args.sample_name
     target_name = args.target_name
     sample_info = pd.read_csv(args.sample_info, sep='\t', header=0)
-    DNA_input = sample_info.loc[sample_info['Sample'] == sample_name, 'Library_Mass']
-    DNA_conc = sample_info.loc[sample_info['Sample'] == sample_name, 'DNA_Extract_Conc']
+    DNA_input = sample_info.loc[sample_info['Sample'] == sample_name, 'Library_Mass'].item()
+    DNA_conc = sample_info.loc[sample_info['Sample'] == sample_name, 'DNA_Extract_Conc'].item()
 
     results = quant_unknown(sample_name, target_name, args.database_lengths, args.mapping_results, 
                             args.detect_thresh, args.quad_reg1, args.quad_reg2, args.quad_reg3, 
