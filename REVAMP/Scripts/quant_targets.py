@@ -327,7 +327,6 @@ def quant_correction(sample_name, input_info, sliding_window, quad_reg1, quad_re
            upper = np.maximum(upper, 0)
 
            temp = pd.concat([sliding_window, pd.DataFrame({'lower': lower, 'upper': upper})], axis=1)
-           #temp.columns = list(sliding_window.columns) + ['lower', 'upper']
 
            # Apply corrections
            sliding_window.loc[sliding_window['error_region'] == True, 'avg_depth'] = np.clip(sliding_window.loc[sliding_window['error_region'] == True, 'avg_depth'], temp.loc[temp['error_region'] == True, 'lower'], temp.loc[temp['error_region'] == True, 'upper'])
@@ -476,13 +475,14 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results, quad
             continue
 
         rmse = np.sqrt(np.sum((pred - sliding_window['avg_depth'])**2) / sliding_window.shape[0])
-        print("RMSE =", rmse, "RMSE_limit =", RMSE_limit)
+
         results.loc[(results['ID'] == ID), 'RMSE'] = rmse
         results.loc[(results['ID'] == ID), 'RMSE_limit'] = RMSE_limit
 
         # Apply correction if RMSE exceeds limit (based on average read depth)
         if results[results['ID'] == ID]['RMSE'].iloc[0] > results[results['ID'] == ID]['RMSE_limit'].iloc[0]:
             results.loc[results['ID'] == ID, 'status'] = 'needs_correction'
+            sliding_window['status'] = 'needs_correction'
             correct = quant_correction(sample_name, results[results['ID'] == ID], sliding_window, 
                                           quad_reg1, quad_reg2, quad_reg3, quad_reg4, cutoff_function1, 
                                           cutoff_function2, cutoff_function3, cutoff_function4)
@@ -507,8 +507,7 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results, quad
     results['correction_results'] = 'Accurate'
     mask = "status == 'needs_correction' and (frac_corrected > 0.2 or cycle > 20 or RMSE > RMSE_limit or gene_copies == 0)"
     results.loc[results.query(mask).index, 'correction_results'] = 'Review'
-    #results.loc[(results['status'] == 'needs_correction') & ((results['frac_corrected'] > 0.2) | (results['cycle'] > 20) | (results['RMSE'] > results['RMSE_limit']) | (results['gene_copies'] == 0)), 'correction_results'] = 'Review'
-
+    
     # Save results
     output_dir = f'Results/{sample_name}/Ind_Correction_Results/{descript}_corrected_results.tsv'
     output_dir = Path(output_dir)
