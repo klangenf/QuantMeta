@@ -534,13 +534,10 @@ def prediction(mapping, DNA_input, DNA_conc):
     --------
     pd.DataFrame : Predicted concentrations
     """
-    def pred_conc_calc(copies, mass, conc):
-        """Convert gene copies to concentration in DNA extract."""
-        return copies * conc / mass
 
     result = pd.DataFrame({
         'ID': mapping['ID'],
-        'predicted_conc': pred_conc_calc(mapping['gene_copies'], DNA_input, DNA_conc)
+        'predicted_conc': mapping['gene_copies']*DNA_conc[0]/DNA_input[0]
     })
 
     return result
@@ -623,8 +620,8 @@ def quant_unknown(sample_name, target_name, database_lengths, mapping_results_pa
     quant_regression = load_pickle_model(quant_regression_path)
     pred = quant_regression['intercept'] + quant_regression['slope'] * np.log10(results['predicted_conc'])
     pred_se = np.sqrt((4*quant_regression['r_sq'] * (1 - quant_regression['r_sq'])**2 * (quant_regression['n'] - 2)**2)/((quant_regression['n']**2 - 1) * (quant_regression['n'] + 3)))
-    pred_se_up = quant_regression['r_sq'] + pred_se
-    pred_se_low = quant_regression['r_sq'] - pred_se
+    pred_se_up = pred + pred_se
+    pred_se_low = pred - pred_se
 
     results_final = pd.DataFrame({
         'ID': results['ID'],
