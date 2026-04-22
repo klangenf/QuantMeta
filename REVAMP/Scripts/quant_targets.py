@@ -235,7 +235,7 @@ def detection_threshold(mapping_results, lengths, detect_thresh):
     return out_table
 
 
-def quant_correction(sample_name, input_info, sliding_window, quad_reg1, quad_reg2, 
+def quant_correction(sample_name, ID, input_info, sliding_window, quad_reg1, quad_reg2, 
                      quad_reg3, quad_reg4, cutoff_function1, cutoff_function2, 
                      cutoff_function3, cutoff_function4):
     """
@@ -267,21 +267,21 @@ def quant_correction(sample_name, input_info, sliding_window, quad_reg1, quad_re
     sliding_window['initial_avg_depth'] = sliding_window['avg_depth']
 
     # Select appropriate models based on depth
-    if input_info['gene_copies'].iloc[0] < 10:
+    if input_info.loc[input_info['ID'] == ID, 'gene_copies'].item() < 10:
         read_depth_var_model = quad_reg1
-    elif input_info['gene_copies'].iloc[0] < 100:
+    elif input_info.loc[input_info['ID'] == ID, 'gene_copies'].item() < 100:
         read_depth_var_model = quad_reg2
-    elif input_info['gene_copies'].iloc[0] < 1000:
+    elif input_info.loc[input_info['ID'] == ID, 'gene_copies'].item() < 1000:
         read_depth_var_model = quad_reg3
     else:
         read_depth_var_model = quad_reg4
 
 
     # Iterative correction loop
-    while (input_info['RMSE'].iloc[0] > input_info['RMSE_limit'].iloc[0] and
-           input_info['cycle'].iloc[0] <= max_cycles and
-           input_info['frac_corrected'].iloc[0] <= 0.2 and
-           input_info['gene_copies'].iloc[0] > 0):
+    while ((input_info.loc[input_info['ID'] == ID, 'RMSE'].item() > input_info.loc[input_info['ID'] == ID, 'RMSE_limit'].item()) and 
+           (input_info.loc[input_info['ID'] == ID, 'cycle'].item() < max_cycles) and
+           (input_info.loc[input_info['ID'] == ID, 'frac_corrected'].item() <= 0.2) and
+           (input_info.loc[input_info['ID'] == ID, 'gene_copies'].item() > 0)):
            
            pred = predict_read_var(read_depth_var_model, sliding_window[['avg_GC', 'gene_copies', 'E_rel']])
            
@@ -302,7 +302,7 @@ def quant_correction(sample_name, input_info, sliding_window, quad_reg1, quad_re
            if len(specific_regions) > 0: 
                sliding_window['gene_copies'] = specific_regions['avg_depth'].mean()
            else:
-               input_info['frac_corrected'].iloc[0] = 1
+               input_info.loc[input_info['ID'] == ID, 'frac_corrected'] = 1
                break
            
            # Select appropriate models based on depth
@@ -333,16 +333,16 @@ def quant_correction(sample_name, input_info, sliding_window, quad_reg1, quad_re
            
            # Update total average depth
            sliding_window['gene_copies'] = sliding_window['avg_depth'].mean()
-           input_info['gene_copies'].iloc[0] = sliding_window['gene_copies'].iloc[0]
+           input_info.loc[input_info['ID'] == ID, 'gene_copies'] = sliding_window['gene_copies'].iloc[0]
            
            # Select appropriate models based on depth
-           if input_info['gene_copies'].iloc[0] < 10:
+           if input_info.loc[input_info['ID'] == ID, 'gene_copies'].item() < 10:
                read_depth_var_model = quad_reg1
                rmse_threshold_model = cutoff_function1
-           elif input_info['gene_copies'].iloc[0] < 100:
+           elif input_info.loc[input_info['ID'] == ID, 'gene_copies'].item() < 100:
                read_depth_var_model = quad_reg2
                rmse_threshold_model = cutoff_function2
-           elif input_info['gene_copies'].iloc[0] < 1000:
+           elif input_info.loc[input_info['ID'] == ID, 'gene_copies'].item() < 1000:
                read_depth_var_model = quad_reg3
                rmse_threshold_model = cutoff_function3
            else:
@@ -353,20 +353,23 @@ def quant_correction(sample_name, input_info, sliding_window, quad_reg1, quad_re
            pred = predict_read_var(read_depth_var_model, sliding_window[['avg_GC', 'gene_copies', 'E_rel']])
            
            rmse = np.sqrt(np.sum((pred - sliding_window['avg_depth'])**2) / len(sliding_window))
-           RMSE_limit = predict_rmse_limit(rmse_threshold_model, input_info['gene_copies'].iloc[0])
+           RMSE_limit = predict_rmse_limit(rmse_threshold_model, input_info.loc[input_info['ID'] == ID, 'gene_copies'].iloc[0])
            
-           input_info['RMSE'].iloc[0] = rmse
-           input_info['RMSE_limit'].iloc[0] = RMSE_limit
-           input_info['cycle'].iloc[0] += 1
+           input_info.loc[input_info['ID'] == ID, 'RMSE'] = rmse
+           input_info.loc[input_info['ID'] == ID, 'RMSE_limit'] = RMSE_limit
+           input_info.loc[input_info['ID'] == ID, 'cycle'] += 1
            
            # Calculate fraction corrected
-           input_info['frac_corrected'].iloc[0] = np.sum(sliding_window['avg_depth'] != sliding_window['initial_avg_depth']) / len(sliding_window)
+           input_info.loc[input_info['ID'] == ID, 'frac_corrected'] = np.sum(sliding_window['avg_depth'] != sliding_window['initial_avg_depth']) / len(sliding_window)
+
            
     # Save corrected mapping sliding windows for this target
     output_dir = f'Results/{sample_name}/Ind_Correction_Results/{input_info["ID"].iloc[0]}_corrected_mapping.tsv'
     output_dir = Path(output_dir)
     output_dir.parent.mkdir(parents=True, exist_ok=True)
     sliding_window.to_csv(output_dir, sep='\t', index=False)
+
+    print(f"Finished correction for {input_info.loc[input_info['ID'] == ID, 'ID'].item()} after {input_info.loc[input_info['ID'] == ID, 'cycle'].item()} cycles with final RMSE {input_info.loc[input_info['ID'] == ID, 'RMSE'].item():.4f} and fraction corrected {input_info.loc[input_info['ID'] == ID, 'frac_corrected'].item():.4f}")
 
     return input_info
 
@@ -448,6 +451,7 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results, quad
     corrected = pd.DataFrame()
 
     for ID in results['ID'].unique():
+        print(f"Processing {ID} for correction analysis...")
         map_ID = mapping_results[mapping_results['ID'] == ID]
         if len(map_ID) > window_size:
             sliding_window = pd.DataFrame(compute_stats(map_ID, window_size=window_size, contig=ID), columns=['ID', 'avg_GC', 'avg_depth'])
@@ -483,7 +487,8 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results, quad
         if results[results['ID'] == ID]['RMSE'].iloc[0] > results[results['ID'] == ID]['RMSE_limit'].iloc[0]:
             results.loc[results['ID'] == ID, 'status'] = 'needs_correction'
             sliding_window['status'] = 'needs_correction'
-            correct = quant_correction(sample_name, results[results['ID'] == ID], sliding_window, 
+            print(f"ID {ID} exceeds RMSE limit. Applying correction...")
+            correct = quant_correction(sample_name, ID, results[results['ID'] == ID], sliding_window, 
                                           quad_reg1, quad_reg2, quad_reg3, quad_reg4, cutoff_function1, 
                                           cutoff_function2, cutoff_function3, cutoff_function4)
             corrected = pd.concat([corrected, correct], ignore_index=True)
@@ -542,98 +547,6 @@ def prediction(mapping, DNA_input, DNA_conc):
 
     return result
 
-def quant_unknown(sample_name, target_name, database_lengths, mapping_results_path, E_detect_model_path,
-                  quad_reg1_path, quad_reg2_path, quad_reg3_path, quad_reg4_path,
-                  cutoff_function1_path, cutoff_function2_path, cutoff_function3_path, cutoff_function4_path,
-                  quant_regression_path, DNA_input, DNA_conc, window_size=49):
-    """
-    Main function to quantify unknown targets.
-
-    Parameters:
-    -----------
-    sample_name : str
-        Sample name for output files
-    target_name : str
-        Target name for output files
-    database_lengths : str
-        Path to sequence lengths file
-    mapping_results_path : str
-        Path to mapping results file
-    E_detect_model_path : str
-        Path to detection model
-    window_size : int
-        Size of sliding window for correction analysis, default: 49
-    quad_reg1..4_path : str
-        Path to each read depth variability model
-    cutoff_function1..4_path : str
-        Path to each RMSE threshold function
-    quant_regression_path : str
-        Path to quantification regression model
-    DNA_input : float
-        DNA mass used in library prep (ng)
-    DNA_conc : float
-        DNA concentration (ng/µL)
-    
-
-    Returns:
-    --------
-    pd.DataFrame : Final quantification results
-    """
-    # Load sequence lengths
-    lengths = pd.read_csv(database_lengths, sep='\t', header=None, names=['ID', 'length'])
-
-    # Load mapping data
-    mapping_results = pd.read_csv(mapping_results_path, sep='\t', header=0)
-
-    # Assess detection thresholds
-    detect_thresh = load_detection_model(E_detect_model_path)
-
-    mapping = detection_threshold(mapping_results, lengths, detect_thresh)
-
-    output_path = Path('Mapping')/ sample_name / f'{target_name}_mapping_analysis.txt'
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    mapping.to_csv(output_path, sep='\t', index=False)
-
-    # Filter targets above detection threshold
-    mapping = mapping[mapping['E_rel'] >= mapping['E_detect']]
-
-    # Detect and correct read mapping errors
-    if len(mapping) > 0:
-        mapping = quant_correct_analysis(sample_name, target_name, mapping_results, mapping, quad_reg1_path, 
-                                         quad_reg2_path, quad_reg3_path, quad_reg4_path, cutoff_function1_path, 
-                                         cutoff_function2_path, cutoff_function3_path, cutoff_function4_path, window_size)
-
-        # Remove targets that are not quantifiable
-        mapping = mapping[mapping['correction_results'].isin(['Accurate'])]
-    else:
-        print("No targets above detection and quantifiable!")
-        pd.DataFrame({"message": ["No targets above detection and quantifiable!"]}).to_csv(output_dir, index=False, header=False)
-
-    # Convert relative abundances from fractions to copies/µL DNA extract
-    results = prediction(mapping, DNA_input, DNA_conc)
-
-    # Convert to absolute abundance using regression model
-    quant_regression = load_pickle_model(quant_regression_path)
-    pred = quant_regression['intercept'] + quant_regression['slope'] * np.log10(results['predicted_conc'])
-    pred_se = np.sqrt((4*quant_regression['r_sq'] * (1 - quant_regression['r_sq'])**2 * (quant_regression['n'] - 2)**2)/((quant_regression['n']**2 - 1) * (quant_regression['n'] + 3)))
-    pred_se_up = pred + pred_se
-    pred_se_low = pred - pred_se
-
-    results_final = pd.DataFrame({
-        'ID': results['ID'],
-        'concentration (copies/µL DNA extract)': 10**pred,
-        'upper 95% CI (copies/µL DNA extract)': 10**pred_se_up,
-        'lower 95% CI (copies/µL DNA extract)': 10**pred_se_low
-    })
-
-    # Save final results
-    output_dir = f'Results/{sample_name}/{target_name}_concentrations.tsv'
-    output_dir = Path(output_dir)
-    output_dir.parent.mkdir(parents=True, exist_ok=True)
-    results_final.to_csv(output_dir, sep='\t', index=False)
-
-    return results_final
-
 
 if __name__ == "__main__":
     import argparse
@@ -663,12 +576,73 @@ if __name__ == "__main__":
     sample_info = pd.read_csv(args.sample_info, sep='\t', header=0)
     DNA_input = sample_info.loc[sample_info['Sample'] == sample_name, 'Library_Mass'].item()
     DNA_conc = sample_info.loc[sample_info['Sample'] == sample_name, 'DNA_Extract_Conc'].item()
+    print(f"Processing {target_name} in {sample_name} with DNA input {DNA_input} ng and DNA concentration {DNA_conc} ng/µL")
+    
+    # Load sequence lengths
+    lengths = pd.read_csv(args.database_lengths, sep='\t', header=None, names=['ID', 'length'])
 
-    results = quant_unknown(sample_name, target_name, args.database_lengths, args.mapping_results, 
-                            args.detect_thresh, args.quad_reg1, args.quad_reg2, args.quad_reg3, 
-                            args.quad_reg4, args.cutoff_function1, args.cutoff_function2, 
-                            args.cutoff_function3, args.cutoff_function4, args.quant_regression, 
-                            DNA_input, DNA_conc, args.window_size)
+    # Load mapping data
+    mapping_results = pd.read_csv(args.mapping_results, sep='\t', header=0)
 
-    print("Quantification complete!")
-    print(f"Quantified {len(results)} targets.")
+    # Assess detection thresholds
+    detect_thresh = load_detection_model(args.detect_thresh)
+
+    mapping = detection_threshold(mapping_results, lengths, detect_thresh)
+
+    output_path = Path('Mapping')/ sample_name / f'{target_name}_mapping_analysis.txt'
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    mapping.to_csv(output_path, sep='\t', index=False)
+
+    # Filter targets above detection threshold
+    mapping = mapping[mapping['E_rel'] >= mapping['E_detect']]
+
+    output_dir = f'Results/{sample_name}/{target_name}_concentrations.tsv'
+    output_dir = Path(output_dir)
+    output_dir.parent.mkdir(parents=True, exist_ok=True)
+
+    # Detect and correct read mapping errors
+    quad_reg1_path = args.quad_reg1
+    quad_reg2_path = args.quad_reg2
+    quad_reg3_path = args.quad_reg3
+    quad_reg4_path = args.quad_reg4 
+    cutoff_function1_path = args.cutoff_function1
+    cutoff_function2_path = args.cutoff_function2
+    cutoff_function3_path = args.cutoff_function3
+    cutoff_function4_path = args.cutoff_function4
+    window_size = args.window_size
+    print(f"Starting correction analysis for {target_name} in {sample_name} with window size {window_size}...")
+    if len(mapping) > 0:
+        mapping = quant_correct_analysis(sample_name, target_name, mapping_results, mapping, quad_reg1_path, 
+                                         quad_reg2_path, quad_reg3_path, quad_reg4_path, cutoff_function1_path, 
+                                         cutoff_function2_path, cutoff_function3_path, cutoff_function4_path, 
+                                         window_size=window_size)
+
+        # Remove targets that are not quantifiable
+        mapping = mapping[mapping['correction_results'].isin(['Accurate'])]
+        print(f"{len(mapping)} targets above detection and quantifiable after correction.")
+    else:
+        print("No targets above detection and quantifiable!")
+        pd.DataFrame({"message": ["No targets above detection and quantifiable!"]}).to_csv(output_dir, index=False, header=False)
+
+    # Convert relative abundances from fractions to copies/µL DNA extract
+    results = prediction(mapping, DNA_input, DNA_conc)
+
+    # Convert to absolute abundance using regression model
+    quant_regression = load_pickle_model(args.quant_regression)
+    pred = quant_regression['intercept'] + quant_regression['slope'] * np.log10(results['predicted_conc'])
+    pred_se = np.sqrt((4*quant_regression['r_sq'] * (1 - quant_regression['r_sq'])**2 * (quant_regression['n'] - 2)**2)/((quant_regression['n']**2 - 1) * (quant_regression['n'] + 3)))
+    pred_se_up = pred + pred_se
+    pred_se_low = pred - pred_se
+
+    results_final = pd.DataFrame({
+        'ID': results['ID'],
+        'concentration (copies/µL DNA extract)': 10**pred,
+        'upper 95% CI (copies/µL DNA extract)': 10**pred_se_up,
+        'lower 95% CI (copies/µL DNA extract)': 10**pred_se_low
+    })
+
+    # Save final results
+    results_final.to_csv(output_dir, sep='\t', index=False)
+
+    print(f"Quantification complete for {target_name} in {sample_name}!")
+    print(f"Quantified {len(results_final)} targets.")
