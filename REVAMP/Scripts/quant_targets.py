@@ -237,7 +237,7 @@ def detection_threshold(mapping_results, lengths, detect_thresh):
 
 def quant_correction(sample_name, ID, input_info, sliding_window, quad_reg1, quad_reg2, 
                      quad_reg3, quad_reg4, cutoff_function1, cutoff_function2, 
-                     cutoff_function3, cutoff_function4):
+                     cutoff_function3, cutoff_function4, out_dir):
     """
     Detect and correct non-specific mapping for database targets.
 
@@ -364,7 +364,7 @@ def quant_correction(sample_name, ID, input_info, sliding_window, quad_reg1, qua
 
            
     # Save corrected mapping sliding windows for this target
-    output_dir = f'Results/{sample_name}/Ind_Correction_Results/{input_info["ID"].iloc[0]}_corrected_mapping.tsv'
+    output_dir = f'{out_dir}/Results/{sample_name}/Ind_Correction_Results/{input_info["ID"].iloc[0]}_corrected_mapping.tsv'
     output_dir = Path(output_dir)
     output_dir.parent.mkdir(parents=True, exist_ok=True)
     sliding_window.to_csv(output_dir, sep='\t', index=False)
@@ -403,7 +403,7 @@ def compute_avg_depth(depth_array):
 
 def quant_correct_analysis(sample_name, descript, mapping_results, results, quad_reg1_path, 
                            quad_reg2_path, quad_reg3_path, quad_reg4_path, cutoff_function1_path, 
-                           cutoff_function2_path, cutoff_function3_path, cutoff_function4_path, window_size=49):
+                           cutoff_function2_path, cutoff_function3_path, cutoff_function4_path, out_dir, window_size=49):
     """
     Main correction function that orchestrates non-specific mapping detection and correction.
 
@@ -490,7 +490,7 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results, quad
             print(f"ID {ID} exceeds RMSE limit. Applying correction...")
             correct = quant_correction(sample_name, ID, results[results['ID'] == ID], sliding_window, 
                                           quad_reg1, quad_reg2, quad_reg3, quad_reg4, cutoff_function1, 
-                                          cutoff_function2, cutoff_function3, cutoff_function4)
+                                          cutoff_function2, cutoff_function3, cutoff_function4, out_dir)
             corrected = pd.concat([corrected, correct], ignore_index=True)
 
     if len(corrected) > 0:
@@ -514,7 +514,7 @@ def quant_correct_analysis(sample_name, descript, mapping_results, results, quad
     results.loc[results.query(mask).index, 'correction_results'] = 'Review'
     
     # Save results
-    output_dir = f'Results/{sample_name}/Ind_Correction_Results/{descript}_corrected_results.tsv'
+    output_dir = f'{out_dir}/Results/{sample_name}/Ind_Correction_Results/{descript}_corrected_results.tsv'
     output_dir = Path(output_dir)
     output_dir.parent.mkdir(parents=True, exist_ok=True)
     results.to_csv(output_dir, sep='\t', index=False)
@@ -568,6 +568,7 @@ if __name__ == "__main__":
     parser.add_argument('--cutoff_function2', required=True, help='Paths to RMSE threshold function for 10-100 reads/bp')
     parser.add_argument('--cutoff_function3', required=True, help='Paths to RMSE threshold function for 100-1000 reads/bp')
     parser.add_argument('--cutoff_function4', required=True, help='Paths to RMSE threshold function for 1000+ reads/bp')
+    parser.add_argument('--output_dir', default='QuantMeta/', help='Output directory for project')
 
     args = parser.parse_args()
 
@@ -577,6 +578,8 @@ if __name__ == "__main__":
     DNA_input = sample_info.loc[sample_info['Sample'] == sample_name, 'Library_Mass'].item()
     DNA_conc = sample_info.loc[sample_info['Sample'] == sample_name, 'DNA_Extract_Conc'].item()
     print(f"Processing {target_name} in {sample_name} with DNA input {DNA_input} ng and DNA concentration {DNA_conc} ng/µL")
+
+    out_dir = args.output_dir
     
     # Load sequence lengths
     lengths = pd.read_csv(args.database_lengths, sep='\t', header=None, names=['ID', 'length'])
@@ -589,15 +592,14 @@ if __name__ == "__main__":
 
     mapping = detection_threshold(mapping_results, lengths, detect_thresh)
 
-    output_path = Path('Mapping')/ sample_name / f'{target_name}_mapping_analysis.txt'
+    output_path = Path(f'{out_dir}/Mapping')/ sample_name / f'{target_name}_mapping_analysis.txt'
     output_path.parent.mkdir(parents=True, exist_ok=True)
     mapping.to_csv(output_path, sep='\t', index=False)
 
     # Filter targets above detection threshold
     mapping = mapping[mapping['E_rel'] >= mapping['E_detect']]
 
-    output_dir = f'Results/{sample_name}/{target_name}_concentrations.tsv'
-    output_dir = Path(output_dir)
+    output_dir = Path(f'{out_dir}/Results/{sample_name}')/ f'{target_name}_concentrations.tsv'
     output_dir.parent.mkdir(parents=True, exist_ok=True)
 
     # Detect and correct read mapping errors
@@ -615,7 +617,7 @@ if __name__ == "__main__":
         mapping = quant_correct_analysis(sample_name, target_name, mapping_results, mapping, quad_reg1_path, 
                                          quad_reg2_path, quad_reg3_path, quad_reg4_path, cutoff_function1_path, 
                                          cutoff_function2_path, cutoff_function3_path, cutoff_function4_path, 
-                                         window_size=window_size)
+                                         out_dir, window_size=window_size)
 
         # Remove targets that are not quantifiable
         mapping = mapping[mapping['correction_results'].isin(['Accurate'])]

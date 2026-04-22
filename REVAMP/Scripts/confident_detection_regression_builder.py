@@ -160,8 +160,11 @@ def main():
     parser.add_argument('--min-coverage', type=float, default=0.1, help='Minimum read coverage threshold for detection')
     parser.add_argument('--min-distribution', type=float, default=0.3, help='Minimum observed/Poisson distributed read distribution threshold for detection')
     parser.add_argument('--test-database', default=None, help='Read mapping to a test dataset with a range of relevant target lengths')
+    parser.add_argument('--output-dir', default='QuantMeta/', help='Output directory for the project')
     
     args = parser.parse_args()
+
+    out_dir = args.output_dir
 
     sample_names = pd.read_csv(args.sample_file, sep='\t', header = None)
     sample_names.columns = ['sample']
@@ -197,7 +200,7 @@ def main():
     for _, row in samples.iterrows():
         sample_name = str(row['sample'])
         downsample = str(row['downsample'])
-        mapping_path = Path(f"Mapping/{sample_name}_{downsample}/standards_mapping.txt")
+        mapping_path = Path(f"{out_dir}/Mapping/{sample_name}_{downsample}/standards_mapping.txt")
         if not mapping_path.exists():
             print(f"WARNING: mapping file not found: {mapping_path}")
             continue
@@ -224,7 +227,7 @@ def main():
     for _, row in fail_samples.iterrows():
         sample_name = str(row['sample'])
         fail_set = str(row['fail_set'])
-        mapping_path = Path(f"Mapping/{sample_name}/{fail_set}_mapping.txt")
+        mapping_path = Path(f"{out_dir}/Mapping/{sample_name}/{fail_set}_mapping.txt")
         if not mapping_path.exists():
             print(f"WARNING: fail mapping file not found: {mapping_path}")
             continue
@@ -232,7 +235,7 @@ def main():
         mapping_out = pd.read_csv(mapping_path, sep='\t')
 
         if mapping_out.empty == False:
-            fail_lengths = pd.read_csv(f"Map_Indexes/{fail_set}/fail_standards_lengths.txt", sep='\t')
+            fail_lengths = pd.read_csv(f"{out_dir}/Map_Indexes/{fail_set}/fail_standards_lengths.txt", sep='\t')
             fail_lengths.columns = ['ID', 'length']
             out_logit = mapping_analysis(mapping_out, fail_lengths, min_coverage, min_distribution)
             out_map = out_logit.copy()
@@ -280,13 +283,13 @@ def main():
     for _, row in sample_names.iterrows():
         sample_name = str(row['sample'])
         test_db = str(args.test_database)
-        mapping_path = Path(f"Mapping/{sample_name}/{test_db}_mapping.txt")
+        mapping_path = Path(f"{out_dir}/Mapping/{sample_name}/{test_db}_mapping.txt")
         if not mapping_path.exists():
             print(f"WARNING: mapping file not found: {mapping_path}")
             continue
 
         mapping_out = pd.read_csv(mapping_path, sep='\t')
-        test_lengths = pd.read_csv(f"Map_Indexes/{test_db}_lengths.txt", sep='\t')
+        test_lengths = pd.read_csv(f"{out_dir}/Map_Indexes/{test_db}_lengths.txt", sep='\t')
         test_lengths.columns = ['ID', 'length']
         out_logit = mapping_analysis(mapping_out, test_lengths, min_coverage, min_distribution)
         out_map = out_logit.copy()
@@ -345,7 +348,7 @@ def main():
             plt.legend()
             plt.grid(True, alpha=0.3)
             plt.tight_layout()
-            plt.savefig('Regressions/detection/optimal_thresholds_plot.png', dpi=300)
+            plt.savefig(f'{out_dir}/Regressions/detection/optimal_thresholds_plot.png', dpi=300)
             print("Plot saved to Regressions/detection/optimal_thresholds_plot.png")
             print(f"Linear regression: slope={slope:.4f}, intercept={intercept:.4f}, R²={r_value**2:.4f}")
         else:
@@ -360,7 +363,7 @@ def main():
         'equation': f"E_detect = {intercept:.4f} + {slope:.4f} * log10(length)"
     }
 
-    res_file = Path('Regressions/detection/detection_threshold_custom.json')
+    res_file = Path(f'{out_dir}/Regressions/detection/detection_threshold_custom.json')
     res_file.write_text(json.dumps(model_out, indent=2))
 
     print('✅ Detection threshold regression custom build complete')

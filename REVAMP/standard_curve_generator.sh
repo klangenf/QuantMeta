@@ -22,6 +22,7 @@ mix="Spike-ins/sequins_Mix_A.txt"
 ssmix=""
 spike="Config/spike_in_info.txt"
 detect="Regressions/detection/Langenfeld_2025_E_detect.json"
+output_dir="QuantMeta/"
 window_size=49
 cores=4
 memory="10gb"
@@ -40,6 +41,7 @@ Options:
   -spike, --spike-in-info FILE    Table of sample-specific spike-in information (Sample, Library_Mass (ng), DNA_Extract_Conc (ng/µL), Spike_Frac, ssDNA (0/Spike_Frac) (default: Config/spike_in_info.txt)
   -detect, --detection-threshold FILE  Detection threshold json file (default: Regressions/detection/Langenfeld_2025_E_detect.json)
   -w, --window-size N             Window size for sliding window analysis (default: 49)
+  -o, --output-dir DIR            Directory for output files
   -j, --cores N                   Number of cores (default: 4)
   -mem, --memory N                Memory per CPU (default: 10gb)
   -t, --time TIME                 Time limit (default: 02:00:00)
@@ -62,6 +64,7 @@ while [[ $# -gt 0 ]]; do
     -spike|--spike-in-info) spike="$2"; shift 2 ;;
     -detect|--detection-threshold) detect="$2"; shift 2 ;;
     -w|--window-size) window_size="$2"; shift 2 ;;
+    -o|--output-dir) output_dir="$2"; shift 2 ;;
     -j|--cores) cores="$2"; shift 2 ;;
     -mem|--memory) memory="$2"; shift 2 ;;
     -t|--time) time="$2"; shift 2 ;;
@@ -75,9 +78,9 @@ done
 num_samples=$(wc -l < "$config")
 
 # Run analysis for each sample in parallel (up to $cores at a time)
-seq 0 $((num_samples - 1)) | xargs -n 1 -P "$cores" -I {} bash -c 'bash Scripts/standard_curve_analysis.sh "$1" "$2" "$3" "$4" "$5"' _ {} "$config" "$bam_dir" "$standards" "$window_size"
+seq 0 $((num_samples - 1)) | xargs -n 1 -P "$cores" -I {} bash -c 'bash Scripts/standard_curve_analysis.sh "$1" "$2" "$3" "$4" "$5" "$6"' _ {} "$config" "$bam_dir" "$standards" "$window_size" "$output_dir"
 
 # Run the regression builder
 echo "Running regression builder"
-python3 Scripts/quantmeta.py --sample-info "$spike" --dsDNA-std-mixes "$mix" --ssDNA-std-mixes "$ssmix" --detect-threshold "$detect"
-python3 Scripts/quant_correct_regression_builder.py --sample-names "$config"
+python3 Scripts/quantmeta.py --sample-info "$spike" --dsDNA-std-mixes "$mix" --ssDNA-std-mixes "$ssmix" --detect-threshold "$detect" --output-dir "$output_dir"
+python3 Scripts/quant_correct_regression_builder.py --sample-names "$config" --output-dir "$output_dir"

@@ -47,7 +47,7 @@ def predict_E_detect_by_length(lengths, detect_model):
     raise ValueError('Unsupported detect_model type')
 
 
-def detection_threshold(sample_name, mapping_results_path, target_length_df, detect_thresh):
+def detection_threshold(sample_name, mapping_results_path, target_length_df, detect_thresh, out_dir):
     mapping_results = pd.read_csv(mapping_results_path, sep='\t', header=0)
     mapping_results = mapping_results.astype({
         'ID': str,
@@ -101,7 +101,7 @@ def detection_threshold(sample_name, mapping_results_path, target_length_df, det
 
     out_table = targets[['ID', 'gene_copies', 'E_rel', 'E_detect', 'detection_status']].copy()
 
-    output_path = Path('Mapping')/ sample_name /'standards_mapping_analysis.txt'
+    output_path = Path(out_dir / 'Mapping')/ sample_name /'standards_mapping_analysis.txt'
     output_path.parent.mkdir(parents=True, exist_ok=True)
     out_table.to_csv(output_path, sep='\t', index=False)
 
@@ -120,7 +120,7 @@ def prediction(mapping, DNA_input, DNA_conc):
     return result
 
 
-def visualize(sample_name, results):
+def visualize(sample_name, results, out_dir):
     results = results.copy().dropna(subset=['predicted_conc', 'known_conc'])
     results = results[(results['predicted_conc'] > 0) & (results['known_conc'] > 0)]
 
@@ -150,7 +150,7 @@ def visualize(sample_name, results):
     plt.legend()
     plt.grid(True, which='both', ls=':', alpha=0.3)
 
-    output_path = Path('Regressions/quantification') / f'{sample_name}_standards_rel_to_abs.png'
+    output_path = Path(out_dir / 'Regressions/quantification') / f'{sample_name}_standards_rel_to_abs.png'
     output_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_path, dpi=320, bbox_inches='tight')
     plt.close()
@@ -166,7 +166,8 @@ def quantmeta(sample_name,
               DNA_conc,
               sequins_spike,
               ssDNA_spike,
-              detect_thresh):
+              detect_thresh,
+              out_dir):
 
     dsDNA_STD = dsDNA_stds
     dsDNA_STD['Type'] = 'dsDNA'
@@ -180,7 +181,7 @@ def quantmeta(sample_name,
 
     std_length = STD_MIX[['ID', 'length']].copy()
 
-    mapping = detection_threshold(sample_name, mapping_results_path, std_length, detect_thresh)
+    mapping = detection_threshold(sample_name, mapping_results_path, std_length, detect_thresh, out_dir)
     mapping = mapping.astype({'E_rel': float, 'gene_copies': float, 'E_detect': float})
     mapping = mapping[mapping['E_rel'] >= mapping['E_detect']].copy()
 
@@ -215,12 +216,12 @@ def quantmeta(sample_name,
         'n': int(len(results))
     }
 
-    reg_name = Path('Regressions/quantification') / f'{sample_name}_rel_to_abs.pkl'
+    reg_name = Path(out_dir / 'Regressions/quantification') / f'{sample_name}_rel_to_abs.pkl'
     reg_name.parent.mkdir(parents=True, exist_ok=True)
     with open(reg_name, 'wb') as f:
         pickle.dump(model, f)
 
-    visualize(sample_name, results)
+    visualize(sample_name, results, out_dir)
 
     return results
 
@@ -231,6 +232,7 @@ def main():
     parser.add_argument('--dsDNA-std-mixes', required=True, default='Spike-ins/sequins_Mix_A.txt', help='Table of dsDNA standards (ID, Mass, Rel_Abund, length)')
     parser.add_argument('--ssDNA-std-mixes', required=False, default=None, help='Optional table of ssDNA standards (ID, Mass, Rel_Abund, length)')
     parser.add_argument('--detect-threshold', required=True, default='Regressions/detect/Langenfeld_2025_E_detect.json', help='Length-dependent entropy detection threshold')
+    parser.add_argument('--output-dir', required=True, default='QuantMeta/', help='Output directory for project')
 
     args = parser.parse_args()
 
@@ -238,10 +240,11 @@ def main():
     dsDNA_stds = pd.read_csv(args.dsDNA_std_mixes, sep='\t', header=0)
     ssDNA_stds = pd.read_csv(args.ssDNA_std_mixes, sep='\t', header=0) if args.ssDNA_std_mixes else None
     detect_model = load_detection_model(args.detect_threshold)
+    out_dir = args.output_dir
 
     for _, row in sample_info.iterrows():
         sample_name = row['Sample']
-        mapping_results_path = f'Mapping/{sample_name}/standards_mapping.txt'
+        mapping_results_path = f'{out_dir}/Mapping/{sample_name}/standards_mapping.txt'
         DNA_input = row['Library_Mass']
         DNA_conc = row['DNA_Extract_Conc']
         sequins_spike = row['Spike_Frac']
@@ -256,10 +259,11 @@ def main():
             DNA_conc=DNA_conc,
             sequins_spike=sequins_spike,
             ssDNA_spike=ssDNA_spike,
-            detect_thresh=detect_model
+            detect_thresh=detect_model,
+            out_dir=out_dir
         )
 
-        output = Path('Regressions/quantification') / f'{sample_name}_quantmeta_results.txt'
+        output = Path(out_dir / 'Regressions/quantification') / f'{sample_name}_quantmeta_results.txt'
         output.parent.mkdir(parents=True, exist_ok=True)
         results.to_csv(output, sep='\t', index=False)
         

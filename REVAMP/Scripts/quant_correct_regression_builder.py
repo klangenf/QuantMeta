@@ -255,21 +255,24 @@ def calculate_standardized_residuals(model):
 def main():
     parser = argparse.ArgumentParser(description='Quantification Correction Regression Builder.')
     parser.add_argument('--sample-names', required=True, default='Config/sample_list.txt', help='List of samples')
+    parser.add_argument('--output-dir', required=True, default='QuantMeta/', help='Output directory for project')
     
     args = parser.parse_args()
 
+    out_dir = args.output_dir
+
     # Create output directories
-    output_rdv = 'Regressions/read_depth_variability'
-    Path(output_rdv).mkdir(parents=True, exist_ok=True)
-    output_trdv = 'Regressions/threshold_read_depth_variability'
-    Path(output_trdv).mkdir(parents=True, exist_ok=True)
+    output_rdv = Path(out_dir / 'Regressions/read_depth_variability')
+    output_rdv.mkdir(parents=True, exist_ok=True)
+    output_trdv = Path(out_dir / 'Regressions/threshold_read_depth_variability')
+    output_trdv.mkdir(parents=True, exist_ok=True)
 
     # Load standards data
     sample_names = pd.read_csv(args.sample_names, header=None)[0].tolist()
 
     for _, sample in enumerate(sample_names):
-        mapping_path = f'Mapping/{sample}/standards_mapping_analysis.txt'
-        window_path = f'Mapping/{sample}/standards_sliding_window.txt'
+        mapping_path = f'{out_dir}/Mapping/{sample}/standards_mapping_analysis.txt'
+        window_path = f'{out_dir}/Mapping/{sample}/standards_sliding_window.txt'
         if not Path(mapping_path).exists():
             print(f"Warning: Mapping analysis file not found for sample {sample} at {mapping_path}")
             continue

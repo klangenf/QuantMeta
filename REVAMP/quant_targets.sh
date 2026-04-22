@@ -28,6 +28,7 @@ rmse_cutoff_function1="Regressions/threshold_read_depth_variability/Langenfeld_2
 rmse_cutoff_function2="Regressions/threshold_read_depth_variability/Langenfeld_2025_10to100readsperbp.pkl"
 rmse_cutoff_function3="Regressions/threshold_read_depth_variability/Langenfeld_2025_100to1000readsperbp.pkl"
 rmse_cutoff_function4="Regressions/threshold_read_depth_variability/Langenfeld_2025_gte1000readsperbp.pkl"
+output_dir="QuantMeta/"
 cores=4
 memory="10gb"
 time="2-00:00:00"
@@ -52,6 +53,7 @@ Options:
   -rmse2, --rmse-cutoff-function2 FILE  RMSE threshold function model for 10-100 reads/bp (default: Regressions/threshold_read_depth_variability/Langenfeld_2025_10to100readsperbp.pkl)
   -rmse3, --rmse-cutoff-function3 FILE  RMSE threshold function model for 100-1000 reads/bp (default: Regressions/threshold_read_depth_variability/Langenfeld_2025_100to1000readsperbp.pkl)
   -rmse4, --rmse-cutoff-function4 FILE  RMSE threshold function model for >1000 reads/bp (default: Regressions/threshold_read_depth_variability/Langenfeld_2025_gte1000readsperbp.pkl)
+  -o, --output-dir DIR            Directory to project outputs (default: QuantMeta/)
   -j, --cores N                   Number of cores (default: 4)
   -mem, --memory N                Memory per CPU (default: 10gb)
   -t, --time TIME                 Time limit (default: 2-00:00:00)
@@ -81,6 +83,7 @@ while [[ $# -gt 0 ]]; do
     -rmse2|--rmse-cutoff-function2) rmse2="$2"; shift 2 ;;
     -rmse3|--rmse-cutoff-function3) rmse3="$2"; shift 2 ;;
     -rmse4|--rmse-cutoff-function4) rmse4="$2"; shift 2 ;;
+    -o|--output-dir) output_dir="$2"; shift 2 ;;
     -j|--cores) cores="$2"; shift 2 ;;
     -mem|--memory) memory="$2"; shift 2 ;;
     -t|--time) time="$2"; shift 2 ;;
@@ -89,10 +92,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-bioawk -c fastx '{{ print $name, length($seq) }}' < $targets > Map_Indexes/${target_name}_lengths.txt
+bioawk -c fastx '{{ print $name, length($seq) }}' < $targets > ${output_dir}/Map_Indexes/${target_name}_lengths.txt
 
 # Get number of samples
 num_samples=$(wc -l < "$config")
 
 # Run analysis for each sample in parallel (up to $cores at a time)
-seq 0 $((num_samples - 1)) | xargs -n 1 -P "$cores" -I {} bash -c 'bash Scripts/quant_targets_unknown.sh "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" "${11}" "${12}" "${13}" "${14}" "${15}" "${16}"' _ {} "$config" "$targets_bam_dir" "$targets" "$target_name" "$window_size" "$detect" "$read_depth_variability_model1" "$read_depth_variability_model2" "$read_depth_variability_model3" "$read_depth_variability_model4" "$rmse_cutoff_function1" "$rmse_cutoff_function2" "$rmse_cutoff_function3" "$rmse_cutoff_function4" "$spike_info"
+seq 0 $((num_samples - 1)) | xargs -n 1 -P "$cores" -I {} bash -c 'bash Scripts/quant_targets_unknown.sh "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" "${11}" "${12}" "${13}" "${14}" "${15}" "${16}" ${17}' _ {} "$config" "$targets_bam_dir" "$targets" "$target_name" "$window_size" "$detect" "$read_depth_variability_model1" "$read_depth_variability_model2" "$read_depth_variability_model3" "$read_depth_variability_model4" "$rmse_cutoff_function1" "$rmse_cutoff_function2" "$rmse_cutoff_function3" "$rmse_cutoff_function4" "$spike_info" "$output_dir"

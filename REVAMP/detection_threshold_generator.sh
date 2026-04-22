@@ -25,6 +25,7 @@ test_bam_dir="Mapping/"
 test_name=""
 min_coverage=0.1
 min_distribution=0.3
+output_dir="QuantMeta/"
 cores=4
 memory="10gb"
 time="2-00:00:00"
@@ -45,6 +46,7 @@ Options:
   -tn, --test-name NAME           Name for test database (default: none, required, used for naming output files)
   -min_cov, --min-coverage FLOAT  Minimum read coverage threshold for detection (default: 0.1)
   -min_dist, --min-distribution FLOAT Minimum read distribution threshold for detection (default: 0.3)
+  -o, --output-dir DIR            Directory for output files (default: QuantMeta/)
   -j, --cores N                   Number of cores (default: 4)
   -mem, --memory N                Memory per CPU (default: 10gb)
   -t, --time TIME                 Time limit (default: 2-00:00:00)
@@ -69,6 +71,7 @@ while [[ $# -gt 0 ]]; do
     -tn|--test-name) test_name="$2"; shift 2 ;;
     -min_cov|--min-coverage) min_coverage="$2"; shift 2 ;;
     -min_dist|--min-distribution) min_distribution="$2"; shift 2 ;;
+    -o|--output-dir) output_dir="$2"; shift 2 ;;
     -j|--cores) cores="$2"; shift 2 ;;
     -mem|--memory) memory="$2"; shift 2 ;;
     -t|--time) time="$2"; shift 2 ;;
@@ -77,31 +80,31 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-bowtie2-build -f $standards Map_Indexes/standards
-bioawk -c fastx '{{ print $name, length($seq) }}' < $test > Map_Indexes/${test_name}_lengths.txt
+bowtie2-build -f $standards ${output_dir}/Map_Indexes/standards
+bioawk -c fastx '{{ print $name, length($seq) }}' < $test > ${output_dir}/Map_Indexes/${test_name}_lengths.txt
 
 ### Curate failure standards (negative controls) and map reads to them
-mkdir Map_Indexes/fail_standards_r1
-mkdir Map_Indexes/fail_standards_r2
-mkdir Map_Indexes/fail_standards_r3
-mkdir Map_Indexes/fail_standards_r4
-mkdir Map_Indexes/fail_standards_r5
-mutation-simulator -o Map_Indexes/fail_standards_r1/fail_standards $standards args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5 
-mutation-simulator -o Map_Indexes/fail_standards_r2/fail_standards Map_Indexes/fail_standards_r1/fail_standards_ms.fasta args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5 
-mutation-simulator -o Map_Indexes/fail_standards_r3/fail_standards Map_Indexes/fail_standards_r2/fail_standards_ms.fasta args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5 
-mutation-simulator -o Map_Indexes/fail_standards_r4/fail_standards Map_Indexes/fail_standards_r3/fail_standards_ms.fasta args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5 
-mutation-simulator -o Map_Indexes/fail_standards_r5/fail_standards Map_Indexes/fail_standards_r4/fail_standards_ms.fasta args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5
+mkdir ${output_dir}/Map_Indexes/fail_standards_r1
+mkdir ${output_dir}/Map_Indexes/fail_standards_r2
+mkdir ${output_dir}/Map_Indexes/fail_standards_r3
+mkdir ${output_dir}/Map_Indexes/fail_standards_r4
+mkdir ${output_dir}/Map_Indexes/fail_standards_r5
+mutation-simulator -o ${output_dir}/Map_Indexes/fail_standards_r1/fail_standards $standards args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5 
+mutation-simulator -o ${output_dir}/Map_Indexes/fail_standards_r2/fail_standards ${output_dir}/Map_Indexes/fail_standards_r1/fail_standards_ms.fasta args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5 
+mutation-simulator -o ${output_dir}/Map_Indexes/fail_standards_r3/fail_standards ${output_dir}/Map_Indexes/fail_standards_r2/fail_standards_ms.fasta args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5 
+mutation-simulator -o ${output_dir}/Map_Indexes/fail_standards_r4/fail_standards ${output_dir}/Map_Indexes/fail_standards_r3/fail_standards_ms.fasta args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5 
+mutation-simulator -o ${output_dir}/Map_Indexes/fail_standards_r5/fail_standards ${output_dir}/Map_Indexes/fail_standards_r4/fail_standards_ms.fasta args -sn 0.1 -in 0.02 -inb 5 -de 0.02 -deb 5 -iv 0.02 -ivb 5 -du 0.02 -dub 5 -tl 0.02 -tlb 5
 
 for fail_set in r1 r2 r3 r4 r5; do
-    bioawk -c fastx '{{ print $name, length($seq) }}' < Map_Indexes/fail_standards_${fail_set}/fail_standards_ms.fasta > Map_Indexes/fail_standards_${fail_set}/fail_standards_lengths.txt
-    bowtie2-build -f Map_Indexes/fail_standards_${fail_set}/fail_standards_ms.fasta Map_Indexes/fail_standards_${fail_set}/fail_standards
+    bioawk -c fastx '{{ print $name, length($seq) }}' < ${output_dir}/Map_Indexes/fail_standards_${fail_set}/fail_standards_ms.fasta > ${output_dir}/Map_Indexes/fail_standards_${fail_set}/fail_standards_lengths.txt
+    bowtie2-build -f ${output_dir}/Map_Indexes/fail_standards_${fail_set}/fail_standards_ms.fasta ${output_dir}/Map_Indexes/fail_standards_${fail_set}/fail_standards
 done
 
 # Get number of samples
 num_samples=$(wc -l < "$config")
 
 # Run analysis for each sample in parallel (up to $cores at a time)
-seq 0 $((num_samples - 1)) | xargs -n 1 -P "$cores" -I {} bash -c 'bash Scripts/detection_threshold_analysis.sh "$1" "$2" "$3" "$4" "$5" "$6" "$7"' _ {} "$config" "$standards" "$test_name" "$test" "$fastq_dir" "$test_bam_dir"
+seq 0 $((num_samples - 1)) | xargs -n 1 -P "$cores" -I {} bash -c 'bash Scripts/detection_threshold_analysis.sh "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8"' _ {} "$config" "$standards" "$test_name" "$test" "$fastq_dir" "$test_bam_dir" "$output_dir"
 
 ### once all of the array jobs are complete, run the regression builder
 python3 Scripts/confident_detection_regression_builder.py --sample-file $config --std-file $mix --ssdna-std-file $ssmix --min_coverage $min_coverage --min_distribution $min_distribution --test-database $test_name
