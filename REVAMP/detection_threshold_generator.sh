@@ -80,6 +80,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+mkdir -p "$output_dir/Map_Indexes"
+mkdir -p "$output_dir/Mapping"
+mkdir -p "$output_dir/Regressions"
+mkdir -p "$output_dir/tmp"
 bowtie2-build -f $standards ${output_dir}/Map_Indexes/standards
 bioawk -c fastx '{{ print $name, length($seq) }}' < $test > ${output_dir}/Map_Indexes/${test_name}_lengths.txt
 

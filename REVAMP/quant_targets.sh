@@ -92,6 +92,9 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+mkdir -p "$output_dir/Map_Indexes"
+mkdir -p "$output_dir/Mapping"
+mkdir -p "$output_dir/tmp"
 bioawk -c fastx '{{ print $name, length($seq) }}' < $targets > ${output_dir}/Map_Indexes/${target_name}_lengths.txt
 
 # Get number of samples

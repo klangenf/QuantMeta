@@ -73,7 +73,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-
+mkdir -p "$output_dir/Map_Indexes"
+mkdir -p "$output_dir/Mapping"
+mkdir -p "$output_dir/Regressions"
+mkdir -p "$output_dir/tmp"
 # Get number of samples
 num_samples=$(wc -l < "$config")
 
