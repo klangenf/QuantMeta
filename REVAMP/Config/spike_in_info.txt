@@ -1,3 +1,0 @@
-Sample	Library_Mass	DNA_Extract_Conc	Spike_Frac	ssDNA
-example_1	50	41.4	0.010229	5.70E-05
-example_2	50	128	0.010229	5.70E-05
