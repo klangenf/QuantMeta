@@ -3,7 +3,8 @@ QuantMeta determines the absolute abundance of targets in metagenomes spiked wit
 
 See more details in Langenfeld et al. (2025). The pipeline was developed using a set of 86 dsDNA standards developed by Hardwick et al. (2018) complimented with a set of 5 ssDNA standards. However, the pipeline allows the user to define spike-in standards for applicability to both viral and entire microbial community metagenomes.
 
-Please cite our work: Langenfeld, K., Hegarty, B., Vidaurri, S., Crossette, E., Duhaime, M. B., & Wigginton, K. R. (2025). Development of a quantitative metagenomic approach to establish quantitative limits and its application to viruses. Nucleic acids research, 53(5), gkaf118.
+**Please cite our work:**  
+Langenfeld, K., Hegarty, B., Vidaurri, S., Crossette, E., Duhaime, M. B., & Wigginton, K. R. (2025). Development of a quantitative metagenomic approach to establish quantitative limits and its application to viruses. Nucleic acids research, 53(5), gkaf118.
 
 # Installation
 ```pip install git+https://github.com/klangenf/QuantMeta.git```
