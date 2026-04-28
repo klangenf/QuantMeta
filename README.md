@@ -92,3 +92,28 @@ This step quantifies target sequences by:
 **-o**, **--output-dir** DIR ___ Directory to project outputs (default: QuantMeta/)  
 **-j**, **--cores** N ___ Number of cores (default: 4)  
 **-h**, **--help** ___ Show this help message  
+
+# Input Formatting
+
+**c**, **--config** FILE  
+  - txt file with samples listed one per line
+
+**-s**, **--spike-info** FILE
+  - Tab-separated txt file with 5 columns (Sample, Library_Mass, DNA_Extract_Conc, Spike_Frac, ssDNA)
+    - Sample: sample names
+    - Library_Mass: mass of DNA used in library preparation (ng)
+    - DNA_Extract_Conc: concentration of DNA in the extract used for library preparations (ng/µL)
+    - Spike_Frac: fraction of total DNA from standards (example: 1% standard spike-in would be 0.01)
+    - ssDNA: fraction of total DNA from ssDNA standards (if no ssDNA standards were added, input 0)
+
+**-mix**, **--dsDNA-std-file** FILE
+  - Tab-separated txt file with 4 columns (ID, Mass, Rel_Abund, length)
+    - ID: individual spike-in standard names
+    - Mass: mass of standard (ng)
+    - Rel_Abund: fraction of standard in the mix
+    - length: length of the standard (bp)
+
+**-ssmix**, **--ssDNA-std-file** FILE
+  - Tab-separated txt file with 4 columns (ID, Mass, Rel_Abund, length) -- same format as -mix/--dsDNA-std-file
+
+# Outputs
