@@ -6,8 +6,8 @@ See more details in Langenfeld et al. (2025). The pipeline was developed using a
 Please cite our work: Langenfeld, K., Hegarty, B., Vidaurri, S., Crossette, E., Duhaime, M. B., & Wigginton, K. R. (2025). Development of a quantitative metagenomic approach to establish quantitative limits and its application to viruses. Nucleic acids research, 53(5), gkaf118.
 
 # Installation
-cd QuantMeta
-pip install dist/quantmeta-2.0.0-py3-none-any.whl
+```cd QuantMeta
+pip install dist/quantmeta-2.0.0-py3-none-any.whl```
 
 Note: Requires python>=3.14
 
