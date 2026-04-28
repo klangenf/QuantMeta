@@ -22,9 +22,12 @@ This optional step develops a regression to determine E_detect (minimum E_rel) f
 
 Adjust the minimum coverage (min_coverage) and minimum read distribution (min_distribution) parameters to fit your needs.
 
-**Usage:** ```detection-threshold -c FILE -fq DIR -std FILE -test FILE -tb DIR -tn NAME -min_cov FLOAT -min_dist FLOAT -o DIR -j N```
+**Usage:**  
+
+```detection-threshold -c FILE -fq DIR -std FILE -test FILE -tb DIR -tn NAME -min_cov FLOAT -min_dist FLOAT -o DIR -j N```
 
 **Options:**  
+
 **-c**, **--config** FILE ___ Config file of samples (default: Config/sample_list.txt)  
 **-fq**, **--fastq-dir** DIR ___ Directory containing deinterleaved fastq files named as {sample_name}\_R1.fastq.gz and {sample_name}\_R2.fastq.gz (default: Reads/)  
 **-std**, **--standards** FILE ___ Fasta file with standard sequences (default: Map_Indexes/Langenfeld_2025_standards.fasta)  
@@ -50,9 +53,12 @@ In Langenfeld et al. (2025), the standards were binned based on the average read
 
 The terms in each equation may vary slightly. Based on Browne et al. (2020), Illumina technologies introduce as quadratic GC bias in sequencing results. Additionally, the total average read depth and E_rel may also significantly impact the observed read depth variability. In Langenfeld et al. (2025), E_rel was only a significant factor for the least abundant standards with incomplete coverage (i.e., 0-10 reads/bp bin).
 
-**Usage:** ```standard-curve -c FILE -b DIR -std FILE -mix FILE -spike FILE -detect FILE -w N -o DIR -j N```
+**Usage:**  
 
-**Options:**  
+```standard-curve -c FILE -b DIR -std FILE -mix FILE -spike FILE -detect FILE -w N -o DIR -j N```
+
+**Options:**
+
 **-c**, **--config** FILE ___ Config file of samples (default: Config/sample_list.txt)  
 **-b**, **--bam-dir** DIR ___ Directory containing sorted bam files of mapping reads to standards named as {sample_name}_standards_sorted.bam (default: Mapping/)  
 **-std**, **--standards** FILE ___ Fasta file with standard sequences (default: Map_Indexes/Langenfeld_2025_standards.fasta)  
@@ -71,9 +77,12 @@ This step quantifies target sequences by:
     2. Correcting for non-specific mapping or assembly error artifacts  
     3. Converting relative abundances to absolute concentrations in DNA extracts (copies/µL DNA extract)  
 
-**Usage:** ```quant-targets -c FILE -s FILE -T FILE -Tb DIR -N NAME -w N -detect FILE -rdv1 FILE -rdv2 FILE -rdv3 FILE -rdv4 FILE -rmse1 FILE -rmse2 FILE -rmse3 FILE -rmse4 FILE -o DIR -j N```
+**Usage:**  
+
+```quant-targets -c FILE -s FILE -T FILE -Tb DIR -N NAME -w N -detect FILE -rdv1 FILE -rdv2 FILE -rdv3 FILE -rdv4 FILE -rmse1 FILE -rmse2 FILE -rmse3 FILE -rmse4 FILE -o DIR -j N```
 
 **Options:**  
+
 **-c**, **--config** FILE ___ Config file of samples (default: Config/sample_list.txt)  
 **-s**, **--spike-info** FILE ___ Table of spike-in information (Sample, Library Mass, DNA Concentration, Spike-in Fraction, ssDNA Fraction) (default: Config/spike_in_info.txt)  
 **-T**, **--targets** FILE ___ Fasta file with target sequences (default: none, required)  
