@@ -83,7 +83,7 @@ if [ $mix == "Spike-ins/sequins_Mix_A.txt" ]; then
     mix="${BASE_DIR}/../data/Spike-ins/sequins_Mix_A.txt"
 fi
 
-if [ $ssmix == "Spike-ins/ssDNA_stds.txt" ]; then
+if [ "$ssmix" == "Spike-ins/ssDNA_stds.txt" ]; then
     ssmix="${BASE_DIR}/../data/Spike-ins/ssDNA_stds.txt"
 fi
 
