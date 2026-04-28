@@ -1,6 +1,6 @@
 [project]
 name = "quantmeta"
-version = "2.0.0"
+version = "2.0.1"
 description = "QuantMeta determines the absolute abundance of targets in metagenomes spiked with synthetic DNA standards. The tool accurately quantifies targets by establishing (1) entropy-based detection thresholds to confidently determine the presence of targets, and (2) an approach to identify and correct read mapping or assembly errors."
 readme = "README.md"
 requires-python = ">=3.14"
