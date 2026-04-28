@@ -126,3 +126,30 @@ This step quantifies target sequences by:
   - Tab-separated txt file with 4 columns (ID, Mass, Rel_Abund, length) -- same format as -mix/--dsDNA-std-file
 
 # Outputs
+### Optional Pre-Step: Generate Detection Threshold
+**Regressions/detection/detection_threshold_custom.json**: Custom detection threshold generated for each sample.
+**Regressions/detection/optimal_thresholds_plot.png**: Visualization of the detection threshold generated for each sample (custom version of Figure S4 in Langenfeld et al. 2025).  
+
+### Step 1: Generate Standard Curves and Read Mapping Error Assessment/Correction Regressions
+**Regressions/quantification/{sample_name}_quantmeta_results.txt**: Table of individual standards "known_conc" (concentration spiked in copies/µL DNA extract) and "predicted_conc" (observed abundance in metagenome when taking into account library prep mass and DNA concentration in submitted sample). These are the individual points used in a linear regression to relate absolute to relative abundances in the log-scale standard curve.  
+**Regressions/quantification/{sample_name}_rel_to_abs.pkl**: Standard curve for quant-targets of the log-scale linear regression relating absolute to relative abundances of spike-in standards.  
+**Regressions/quantification/{sample_name}_standards_rel_to_abs.png**: Visualization of the standard curve.  
+
+**Regressions/read_depth_variability/boxplot_regressions.png**: Visualization of normalized RMSE for each of the average read depth per bp bins (0-10 reads/bp, 10-100 reads/bp, 100-1,000 reads/bp, >=1,000 reads/bp).  
+**Regressions/read_depth_variability/qq_plots_regressions.png**: Q-Q plots of the residuals for each of the average read depth per bp bins (custom version of Figure S5 in Langenfeld et al. 2025). It is important that the blue dots do not deviate significantly from the red line which would indicate a poor fit for the read depth variability regression in that read depth per bp bin.  
+**Regressions/read_depth_variability/reg1.pkl**: Read depth variability regression for the 0-10 reads/bp bin.  
+**Regressions/read_depth_variability/reg2.pkl**: Read depth variability regression for the 10-100 reads/bp bin.  
+**Regressions/read_depth_variability/reg3.pkl**: Read depth variability regression for the 100-1,000 reads/bp bin.  
+**Regressions/read_depth_variability/reg4.pkl**: Read depth variability regression for the >=1,000 reads/bp bin.  
+
+**Regressions/threshold_read_depth_variability/RMSE_scatter.png**: Visualization of the RMSE each standard at their average read depth divided into the average read depth per bp bins.  
+**Regressions/threshold_read_depth_variability/RMSE_thresholds.png**: Visualization of the RMSE thresholds for each average read depth per bp bins (custom version of Figure 3B in Langenfeld et al. 2025).  
+**Regressions/threshold_read_depth_variability/func1.pkl**: RMSE threshold for read depth variability for the 0-10 reads/bp bin.  
+**Regressions/threshold_read_depth_variability/func2.pkl**: RMSE threshold for read depth variability for the 10-100 reads/bp bin.  
+**Regressions/threshold_read_depth_variability/func3.pkl**: RMSE threshold for read depth variability for the 100-1,000 reads/bp bin.  
+**Regressions/threshold_read_depth_variability/func4.pkl**: RMSE threshold for read depth variability for the >=1,000 reads/bp bin.  
+
+### Step 2: Quantify Targets Genes or Genomes
+**Mapping/{sample_name}/{target_name}_mapping_analysis.txt**: Detection results for each target including the observed entropy (E_rel) and the minimum entropy required for detection (E_detect).  
+**Results/{sample_name}/{target_name}_concentrations.tsv**: Final concentrations of each quantifiable and detected target in the DNA extract (copies/µL DNA extract) with 95% confidence interval values.  
+**Results/{sample_name}/Ind_Correction_Results/{target_name}_corrected_results.tsv**: Read mapping error assessment with notation if quantification correction was run and its outcomes. Each individual target undergoing quantification correction will have its own file in this directory with information on where error correction was performed and how the read depth was altered.  
