@@ -30,21 +30,21 @@ Adjust the minimum coverage (min_coverage) and minimum read distribution (min_di
 **Options:**  
 
 **-c**, **--config** FILE  
-Config file of samples (_default: Config/sample_list.txt_)  
+Config file of samples (_default: None_, required)  
 **-fq**, **--fastq-dir** DIR  
 Directory containing deinterleaved fastq files named as {sample_name}\_R1.fastq.gz and {sample_name}\_R2.fastq.gz (_default: Reads/_)  
 **-std**, **--standards** FILE  
-Fasta file with standard sequences (_default: Map_Indexes/Langenfeld_2025_standards.fasta_)  
+Fasta file with standard sequences (_default: Langenfeld_2025_standards.fasta_)  
 **-mix**, **--dsDNA-std-file** FILE  
-Table of dsDNA standards (ID, Mass, Rel_Abund, length) (_default: Spike-ins/sequins_Mix_A.txt_)  
+Table of dsDNA standards (ID, Mass, Rel_Abund, length) (_default: sequins_Mix_A.txt_)  
 **-ssmix**, **--ssDNA-std-file** FILE  
-Optional table of ssDNA standards (ID, Mass, Rel_Abund, length) (_default: none_, optional for Langenfeld et al. 2025 ssDNA standards specify Spike-ins/ssDNA_stds.txt)  
+Optional table of ssDNA standards (ID, Mass, Rel_Abund, length) (_default: none_, optional for Langenfeld et al. 2025 ssDNA standards specify ssDNA_stds.txt)  
 **-test**, **--test-database** FILE  
-Fasta file with test sequences (_default: none_, required for regression builder)  
+Fasta file with test sequences (_default: None_, required for regression builder)  
 **-tb**, **--test-bam-dir** DIR  
 Directory containing sorted bam files of mapping reads to test database named as {sample_name}_{test_name}_sorted.bam (_default: Mapping/_)  
 **-tn**, **--test-name** NAME  
-Name for test database (_default: none_, required, used for naming output files)  
+Name for test database (_default: None_, required, used for naming output files)  
 **-min_cov**, **--min-coverage** FLOAT  
 Minimum read coverage threshold for detection (_default: 0.1_)  
 **-min_dist**, **--min-distribution** FLOAT  
@@ -74,19 +74,19 @@ The terms in each equation may vary slightly. Based on Browne et al. (2020), Ill
 **Options:**
 
 **-c**, **--config** FILE  
-Config file of samples (_default: Config/sample_list.txt_)  
+Config file of samples (_default: None_, required)  
 **-b**, **--bam-dir** DIR  
 Directory containing sorted bam files of mapping reads to standards named as {sample_name}_standards_sorted.bam (_default: Mapping/_)  
 **-std**, **--standards** FILE  
-Fasta file with standard sequences (_default: Map_Indexes/Langenfeld_2025_standards.fasta_)  
+Fasta file with standard sequences (_default: Langenfeld_2025_standards.fasta_)  
 **-mix**, **--dsDNA-std-file** FILE  
-Table of dsDNA standards (ID, Mass, Rel_Abund, length) (_default: Spike-ins/sequins_Mix_A.txt_)  
+Table of dsDNA standards (ID, Mass, Rel_Abund, length) (_default: sequins_Mix_A.txt_)  
 **-ssmix**, **--ssDNA-std-file** FILE  
-Optional table of ssDNA standards (ID, Mass, Rel_Abund, length) (_default: none_, optional for Langenfeld et al. 2025 ssDNA standards specify Spike-ins/ssDNA_stds.txt)  
+Optional table of ssDNA standards (ID, Mass, Rel_Abund, length) (_default: None_, optional for Langenfeld et al. 2025 ssDNA standards specify ssDNA_stds.txt)  
 **-spike**, **--spike-in-info** FILE  
-Table of sample-specific spike-in information (Sample, Library_Mass (ng), DNA_Extract_Conc (ng/µL), Spike_Frac, ssDNA (0/Spike_Frac) (_default: Config/spike_in_info.txt_)  
+Table of sample-specific spike-in information (Sample, Library_Mass (ng), DNA_Extract_Conc (ng/µL), Spike_Frac, ssDNA (0/Spike_Frac) (_default: None_, required)  
 **-detect**, **--detection-threshold** FILE  
-Detection threshold json file (_default: Regressions/detection/Langenfeld_2025_E_detect.json_)  
+Detection threshold json file (_default: detection/Langenfeld_2025_E_detect.json_)  
 **-w**, **--window-size** N  
 Window size for sliding window analysis (_default: 49_)  
 **-o**, **--output-dir** DIR  
@@ -109,35 +109,35 @@ This step quantifies target sequences by:
 **Options:**  
 
 **-c**, **--config** FILE  
-Config file of samples (_default: Config/sample_list.txt_)  
+Config file of samples (_default: None_, required)  
 **-s**, **--spike-info** FILE  
-Table of spike-in information (Sample, Library Mass, DNA Concentration, Spike-in Fraction, ssDNA Fraction) (_default: Config/spike_in_info.txt_)  
+Table of spike-in information (Sample, Library Mass, DNA Concentration, Spike-in Fraction, ssDNA Fraction) (_default: None_, required)  
 **-T**, **--targets** FILE  
-Fasta file with target sequences (_default: none_, required)  
+Fasta file with target sequences (_default: None_, required)  
 **-Tb**, **--targets-bam-dir** DIR  
 Directory containing sorted bam files of mapping reads to target database named as {sample_name}_{target_name}_sorted.bam (_default: Mapping/_)  
 **-N**, **--target-name** NAME  
-Name for target database (_default: none_, required, used for naming output files)  
+Name for target database (_default: None_, required, used for naming output files)  
 **-w**, **--window-size** N  
 Window size for sliding window analysis, must be the same as used in standard_curve_generator.sh (_default: 49_)  
 **-detect**, **--detection-threshold** FILE  
-Detection threshold json file (_default: Regressions/detect/Langenfeld_2025_E_detect.json_)  
+Detection threshold json file (_default: detection/Langenfeld_2025_E_detect.json_)  
 **-rdv1**, **--read-depth-variability-model1** FILE  
-Read depth variability model for 0-10 reads/bp (**recommend: using output from Step 1 in Regressions/read_depth_variability/reg1.pkl**; _default: Regressions/read_depth_variability/Langenfeld_2025_0to10readsperbp.pkl_)  
+Read depth variability model for 0-10 reads/bp (**recommend: using output from Step 1 in Regressions/read_depth_variability/reg1.pkl**; _default: read_depth_variability/Langenfeld_2025_0to10readsperbp.pkl_)  
 **-rdv2**, **--read-depth-variability-model2** FILE  
-Read depth variability model for 10-100 reads/bp (**recommend: using output from Step 1 in Regressions/read_depth_variability/reg2.pkl**; _default: Regressions/read_depth_variability/Langenfeld_2025_10to100readsperbp.pkl_)  
+Read depth variability model for 10-100 reads/bp (**recommend: using output from Step 1 in Regressions/read_depth_variability/reg2.pkl**; _default: read_depth_variability/Langenfeld_2025_10to100readsperbp.pkl_)  
 **-rdv3**, **--read-depth-variability-model3** FILE  
-Read depth variability model for 100-1000 reads/bp (**recommend: using output from Step 1 in Regressions/read_depth_variability/reg3.pkl**; _default: Regressions/read_depth_variability/Langenfeld_2025_100to1000readsperbp.pkl_)  
+Read depth variability model for 100-1000 reads/bp (**recommend: using output from Step 1 in Regressions/read_depth_variability/reg3.pkl**; _default: read_depth_variability/Langenfeld_2025_100to1000readsperbp.pkl_)  
 **-rdv4**, **--read-depth-variability-model4** FILE  
-Read depth variability model for >1000 reads/bp (**recommend: using output from Step 1 in Regressions/read_depth_variability/reg4.pkl**; _default: Regressions/read_depth_variability/Langenfeld_2025_gte1000readsperbp.pkl_)  
+Read depth variability model for >1000 reads/bp (**recommend: using output from Step 1 in Regressions/read_depth_variability/reg4.pkl**; _default: read_depth_variability/Langenfeld_2025_gte1000readsperbp.pkl_)  
 **-rmse1**, **--rmse-cutoff-function1** FILE  
-RMSE threshold function model for 0-10 reads/bp (**recommend: using output from Step 1 in Regressions/threshold_read_depth_variability/func1.pkl**; _default: Regressions/threshold_read_depth_variability/Langenfeld_2025_0to10readsperbp.pkl_)  
+RMSE threshold function model for 0-10 reads/bp (**recommend: using output from Step 1 in Regressions/threshold_read_depth_variability/func1.pkl**; _default: threshold_read_depth_variability/Langenfeld_2025_0to10readsperbp.pkl_)  
 **-rmse2**, **--rmse-cutoff-function2** FILE  
-RMSE threshold function model for 10-100 reads/bp (**recommend: using output from Step 1 in Regressions/threshold_read_depth_variability/func2.pkl**; _default: Regressions/threshold_read_depth_variability/Langenfeld_2025_10to100readsperbp.pkl_)  
+RMSE threshold function model for 10-100 reads/bp (**recommend: using output from Step 1 in Regressions/threshold_read_depth_variability/func2.pkl**; _default: threshold_read_depth_variability/Langenfeld_2025_10to100readsperbp.pkl_)  
 **-rmse3**, **--rmse-cutoff-function3** FILE  
-RMSE threshold function model for 100-1000 reads/bp (**recommend: using output from Step 1 in Regressions/threshold_read_depth_variability/func3.pkl**; _default: Regressions/threshold_read_depth_variability/Langenfeld_2025_100to1000readsperbp.pkl_)  
+RMSE threshold function model for 100-1000 reads/bp (**recommend: using output from Step 1 in Regressions/threshold_read_depth_variability/func3.pkl**; _default: threshold_read_depth_variability/Langenfeld_2025_100to1000readsperbp.pkl_)  
 **-rmse4**, **--rmse-cutoff-function4** FILE  
-RMSE threshold function model for >1000 reads/bp (**recommend: using output from Step 1 in Regressions/threshold_read_depth_variability/func4.pkl**; _default: Regressions/threshold_read_depth_variability/Langenfeld_2025_gte1000readsperbp.pkl_)  
+RMSE threshold function model for >1000 reads/bp (**recommend: using output from Step 1 in Regressions/threshold_read_depth_variability/func4.pkl**; _default: threshold_read_depth_variability/Langenfeld_2025_gte1000readsperbp.pkl_)  
 **-o**, **--output-dir** DIR  
 Directory to project outputs (_default: QuantMeta/_)  
 **-j**, **--cores** N  
