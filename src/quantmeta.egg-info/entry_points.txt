@@ -1,0 +1,4 @@
+[console_scripts]
+detection-threshold = quantmeta.detection_threshold.run_sh:main
+quant-targets = quantmeta.quant_targets.run_sh:main
+standard-curve = quantmeta.standard_curve.run_sh:main

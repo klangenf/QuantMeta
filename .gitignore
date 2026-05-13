@@ -1,1 +1,4 @@
-*
+*.lock
+dist
+.env
+.DS_Store
