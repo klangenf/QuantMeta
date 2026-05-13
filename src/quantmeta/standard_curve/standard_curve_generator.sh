@@ -15,7 +15,7 @@ cd "$BASE_DIR"
 
 
 # Default values
-config="${BASE_DIR}/../data/Config/sample_list.txt"
+config=""
 bam_dir="Mapping/"
 standards="${BASE_DIR}/../data/Map_Indexes/Langenfeld_2025_standards.fasta"
 mix="${BASE_DIR}/../data/Spike-ins/sequins_Mix_A.txt"
@@ -31,20 +31,20 @@ usage() {
 Usage: $0 [OPTIONS]
 
 Options:
-  -c, --config FILE               Config file of samples (default: Config/sample_list.txt)
+  -c, --config FILE               Config file of samples (default: none, required)
   -b, --bam-dir DIR               Directory containing sorted bam files of mapping reads to standards named as {sample_name}_standards_sorted.bam (default: Mapping/)
-  -std, --standards FILE          Fasta file with standard sequences (default: Map_Indexes/Langenfeld_2025_standards.fasta)
-  -mix, --dsDNA-std-file FILE     Table of dsDNA standards (ID, Mass, Rel_Abund, length) (default: Spike-ins/sequins_Mix_A.txt)
+  -std, --standards FILE          Fasta file with standard sequences (default: Langenfeld_2025_standards.fasta)
+  -mix, --dsDNA-std-file FILE     Table of dsDNA standards (ID, Mass, Rel_Abund, length) (default: sequins_Mix_A.txt)
   -ssmix, --ssDNA-std-file FILE   Optional table of ssDNA standards (ID, Mass, Rel_Abund, length)
-  -spike, --spike-in-info FILE    Table of sample-specific spike-in information (Sample, Library_Mass (ng), DNA_Extract_Conc (ng/µL), Spike_Frac, ssDNA (0/Spike_Frac) (default: Config/spike_in_info.txt)
-  -detect, --detection-threshold FILE  Detection threshold json file (default: Regressions/detection/Langenfeld_2025_E_detect.json)
+  -spike, --spike-in-info FILE    Table of sample-specific spike-in information (Sample, Library_Mass (ng), DNA_Extract_Conc (ng/µL), Spike_Frac, ssDNA (0/Spike_Frac) (default: none, required)
+  -detect, --detection-threshold FILE  Detection threshold json file (default: detection/Langenfeld_2025_E_detect.json)
   -w, --window-size N             Window size for sliding window analysis (default: 49)
   -o, --output-dir DIR            Directory for output files
   -j, --cores N                   Number of cores (default: 4)
   -h, --help                      Show this help message
 
 Example:
-  $0 --config Config/sample_list.txt --bam-dir Mapping/ --standards Map_Indexes/Langenfeld_2025_standards.fasta --mix Spike-ins/sequins_Mix_A.txt --spike Config/spike_in_info.txt --detect Regressions/detect/Langenfeld_2025_E_detect.json --window-size 49
+  $0 --config sample_list.txt --bam-dir Mapping/ --standards Langenfeld_2025_standards.fasta --mix sequins_Mix_A.txt --spike spike_in_info.txt --detect detection/Langenfeld_2025_E_detect.json --window-size 49
 EOF
   exit 1
 }
@@ -79,15 +79,15 @@ seq 0 $((num_samples - 1)) | xargs -n 1 -P "$cores" -I {} bash -c 'bash "'"$BASE
 # Run the regression builder
 echo "Running regression builder"
 
-if [ $mix == "Spike-ins/sequins_Mix_A.txt" ]; then
+if [ $mix == "sequins_Mix_A.txt" ]; then
     mix="${BASE_DIR}/../data/Spike-ins/sequins_Mix_A.txt"
 fi
 
-if [ "$ssmix" == "Spike-ins/ssDNA_stds.txt" ]; then
+if [ "$ssmix" == "ssDNA_stds.txt" ]; then
     ssmix="${BASE_DIR}/../data/Spike-ins/ssDNA_stds.txt"
 fi
 
-if [ $detect == "Regressions/detection/Langenfeld_2025_E_detect.json" ]; then
+if [ $detect == "detection/Langenfeld_2025_E_detect.json" ]; then
     detect="${BASE_DIR}/../data/Regressions/detection/Langenfeld_2025_E_detect.json"
 fi
 

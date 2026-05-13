@@ -27,12 +27,6 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-def get_sample_info_path(*parts) -> Path:
-    """Get path to package data files."""
-    with resources.as_file(resources.files('quantmeta.data') / 'Config' / 'spike_in_info.txt') as p:
-        base = Path(p).parent.parent.parent
-    return base / 'data' / Path(*parts)
-
 def get_detect_thresh_path(*parts) -> Path:
     """Get path to package data files."""
     with resources.as_file(resources.files('quantmeta.data') / 'Regressions' / 'detection' / 'Langenfeld_2025_E_detect.json') as p:
@@ -643,8 +637,6 @@ if __name__ == "__main__":
     sample_name = args.sample_name
     target_name = args.target_name
     sample_info_path = args.sample_info
-    if sample_info_path == 'Config/spike_in_info.txt':
-        sample_info_path = get_sample_info_path('Config', 'spike_in_info.txt')
     sample_info = pd.read_csv(sample_info_path, sep='\t', header=0)
     DNA_input = sample_info.loc[sample_info['Sample'] == sample_name, 'Library_Mass'].item()
     DNA_conc = sample_info.loc[sample_info['Sample'] == sample_name, 'DNA_Extract_Conc'].item()
@@ -660,7 +652,7 @@ if __name__ == "__main__":
 
     # Assess detection thresholds
     detect_thresh_path = args.detect_thresh
-    if detect_thresh_path == 'Regressions/detection/Langenfeld_2025_E_detect.json':
+    if detect_thresh_path == 'detection/Langenfeld_2025_E_detect.json':
         detect_thresh_path = get_detect_thresh_path('Regressions', 'detection', 'Langenfeld_2025_E_detect.json')
     detect_thresh = load_detection_model(detect_thresh_path)
 
@@ -678,28 +670,28 @@ if __name__ == "__main__":
 
     # Detect and correct read mapping errors
     quad_reg1_path = args.quad_reg1
-    if quad_reg1_path == 'Regressions/read_depth_variability/Langenfeld_2025_0to10readsperbp.pkl':
+    if quad_reg1_path == 'read_depth_variability/Langenfeld_2025_0to10readsperbp.pkl':
         quad_reg1_path = get_quad_reg1_path('Regressions', 'read_depth_variability', 'Langenfeld_2025_0to10readsperbp.pkl')
     quad_reg2_path = args.quad_reg2
-    if quad_reg2_path == 'Regressions/read_depth_variability/Langenfeld_2025_10to100readsperbp.pkl':
+    if quad_reg2_path == 'read_depth_variability/Langenfeld_2025_10to100readsperbp.pkl':
         quad_reg2_path = get_quad_reg2_path('Regressions', 'read_depth_variability', 'Langenfeld_2025_10to100readsperbp.pkl')
     quad_reg3_path = args.quad_reg3
-    if quad_reg3_path == 'Regressions/read_depth_variability/Langenfeld_2025_100to1000readsperbp.pkl':
+    if quad_reg3_path == 'read_depth_variability/Langenfeld_2025_100to1000readsperbp.pkl':
         quad_reg3_path = get_quad_reg3_path('Regressions', 'read_depth_variability', 'Langenfeld_2025_100to1000readsperbp.pkl')
     quad_reg4_path = args.quad_reg4
-    if quad_reg4_path == 'Regressions/read_depth_variability/Langenfeld_2025_gte1000readsperbp.pkl':
+    if quad_reg4_path == 'read_depth_variability/Langenfeld_2025_gte1000readsperbp.pkl':
         quad_reg4_path = get_quad_reg4_path('Regressions', 'read_depth_variability', 'Langenfeld_2025_gte1000readsperbp.pkl')
     cutoff_function1_path = args.cutoff_function1
-    if cutoff_function1_path == 'Regressions/threshold_read_depth_variability/Langenfeld_2025_0to10readsperbp.pkl':
+    if cutoff_function1_path == 'threshold_read_depth_variability/Langenfeld_2025_0to10readsperbp.pkl':
         cutoff_function1_path = get_cutoff1_path('Regressions', 'threshold_read_depth_variability', 'Langenfeld_2025_0to10readsperbp.pkl')
     cutoff_function2_path = args.cutoff_function2
-    if cutoff_function2_path == 'Regressions/threshold_read_depth_variability/Langenfeld_2025_10to100readsperbp.pkl':
+    if cutoff_function2_path == 'threshold_read_depth_variability/Langenfeld_2025_10to100readsperbp.pkl':
         cutoff_function2_path = get_cutoff2_path('Regressions', 'threshold_read_depth_variability', 'Langenfeld_2025_10to100readsperbp.pkl')
     cutoff_function3_path = args.cutoff_function3
-    if cutoff_function3_path == 'Regressions/threshold_read_depth_variability/Langenfeld_2025_100to1000readsperbp.pkl':
+    if cutoff_function3_path == 'threshold_read_depth_variability/Langenfeld_2025_100to1000readsperbp.pkl':
         cutoff_function3_path = get_cutoff3_path('Regressions', 'threshold_read_depth_variability', 'Langenfeld_2025_100to1000readsperbp.pkl')
     cutoff_function4_path = args.cutoff_function4
-    if cutoff_function4_path == 'Regressions/threshold_read_depth_variability/Langenfeld_2025_gte1000readsperbp.pkl':
+    if cutoff_function4_path == 'threshold_read_depth_variability/Langenfeld_2025_gte1000readsperbp.pkl':
         cutoff_function4_path = get_cutoff4_path('Regressions', 'threshold_read_depth_variability', 'Langenfeld_2025_gte1000readsperbp.pkl')
     window_size = args.window_size
     print(f"Starting correction analysis for {target_name} in {sample_name} with window size {window_size}...")

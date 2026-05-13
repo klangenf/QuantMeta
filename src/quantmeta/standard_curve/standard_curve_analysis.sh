@@ -9,8 +9,8 @@ echo $sample
 bam="${3}/${sample}_standards_sorted.bam"
 
 
-if [ $4 == "Map_Indexes/Langenfeld_2025_standards.fasta" ]; then
-    fa_input="${7}/../data/${4}"
+if [ $4 == "Langenfeld_2025_standards.fasta" ]; then
+    fa_input="${7}/../data/Map_Indexes/${4}"
 else
     fa_input=$4
 fi

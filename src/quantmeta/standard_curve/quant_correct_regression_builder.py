@@ -54,12 +54,6 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-def get_sample_file_path(*parts) -> Path:
-    """Get path to package data files."""
-    with resources.as_file(resources.files('quantmeta.data') / 'Config' / 'sample_list.txt') as p:
-        base = Path(p).parent.parent.parent
-    return base / 'data' / Path(*parts)
-
 def fit_read_var_regression(X, y, bin_name):
     """
     Fit polynomial regression with appropriate terms for each depth bin.
@@ -273,7 +267,7 @@ def calculate_standardized_residuals(model):
 
 def main():
     parser = argparse.ArgumentParser(description='Quantification Correction Regression Builder.')
-    parser.add_argument('--sample-names', required=True, default='Config/sample_list.txt', help='List of samples')
+    parser.add_argument('--sample-names', required=True, default=None, help='List of samples')
     parser.add_argument('--output-dir', required=True, default='QuantMeta/', help='Output directory for project')
     
     args = parser.parse_args()
@@ -288,8 +282,6 @@ def main():
 
     # Load standards data
     sample_file = args.sample_names
-    if sample_file == 'Config/sample_list.txt':
-        sample_file = get_sample_file_path('Config', 'sample_list.txt')
     sample_names = pd.read_csv(sample_file, header=None)[0].tolist()
 
     for _, sample in enumerate(sample_names):

@@ -53,12 +53,6 @@ try:
 except ImportError:
     raise ImportError("scikit-learn is required for ROC curve calculation: pip install scikit-learn")
 
-def get_sample_file_path(*parts) -> Path:
-    """Get path to package data files."""
-    with resources.as_file(resources.files('quantmeta.data') / 'Config' / 'sample_list.txt') as p:
-        base = Path(p).parent.parent.parent
-    return base / 'data' / Path(*parts)
-
 def get_std_file_path(*parts) -> Path:
     """Get path to package data files."""
     with resources.as_file(resources.files('quantmeta.data') / 'Spike-ins' / 'sequins_Mix_A.txt') as p:
@@ -184,8 +178,8 @@ def find_optimal_cutpoint(y_true, y_scores, n_boot=1000):
 
 def main():
     parser = argparse.ArgumentParser(description='Build confident detection threshold regression')
-    parser.add_argument('--sample-file', default='Config/sample_list.txt', help='TSV with columns sample')
-    parser.add_argument('--std-file', default='Spike-ins/sequins_Mix_A.txt', help='Table of dsDNA standards (ID, Mass, Rel_Abund, length)')
+    parser.add_argument('--sample-file', default=None, help='TSV with columns sample')
+    parser.add_argument('--std-file', default='sequins_Mix_A.txt', help='Table of dsDNA standards (ID, Mass, Rel_Abund, length)')
     parser.add_argument('--ssDNA-std-file', default=None, help='Optional table of ssDNA standards (ID, Mass, Rel_Abund, length)')
     parser.add_argument('--min-coverage', type=float, default=0.1, help='Minimum read coverage threshold for detection')
     parser.add_argument('--min-distribution', type=float, default=0.3, help='Minimum observed/Poisson distributed read distribution threshold for detection')
@@ -197,8 +191,6 @@ def main():
     out_dir = args.output_dir
 
     sample_file = args.sample_file
-    if sample_file == 'Config/sample_list.txt':  # default
-        sample_file = get_sample_file_path('Config', 'sample_list.txt')
     sample_names = pd.read_csv(sample_file, sep='\t', header = None)
     sample_names.columns = ['sample']
 
@@ -217,13 +209,13 @@ def main():
     fail_samples = pd.DataFrame(fail_samples)
 
     std_file = args.std_file
-    if std_file == 'Spike-ins/sequins_Mix_A.txt':  # default
+    if std_file == 'sequins_Mix_A.txt':  # default
         std_file = get_std_file_path('Spike-ins', 'sequins_Mix_A.txt')
     stds = pd.read_csv(std_file, sep='\t')
     stds_list = stds.loc[~stds['Rel_Abund'].isna(), ['ID', 'length']].copy()
     if args.ssDNA_std_file:
         ssDNA_file = args.ssDNA_std_file
-        if ssDNA_file == 'Spike-ins/ssDNA_stds.txt':  #from Langenfeld et al. 2025
+        if ssDNA_file == 'ssDNA_stds.txt':  #from Langenfeld et al. 2025
             ssDNA_file = get_ssdna_file_path('Spike-ins', 'ssDNA_stds.txt')
         ssdna = pd.read_csv(ssDNA_file, sep='\t')
         ssdna = ssdna.loc[~ssdna['Rel_Abund'].isna(), ['ID', 'length']].copy()

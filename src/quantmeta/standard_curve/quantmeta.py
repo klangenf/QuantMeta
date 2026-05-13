@@ -27,12 +27,6 @@ import numpy as np
 import pandas as pd
 from scipy.stats import linregress
 
-def get_sample_info_path(*parts) -> Path:
-    """Get path to package data files."""
-    with resources.as_file(resources.files('quantmeta.data') / 'Config' / 'spike_in_info.txt') as p:
-        base = Path(p).parent.parent.parent
-    return base / 'data' / Path(*parts)
-
 def get_std_file_path(*parts) -> Path:
     """Get path to package data files."""
     with resources.as_file(resources.files('quantmeta.data') / 'Spike-ins' / 'sequins_Mix_A.txt') as p:
@@ -263,28 +257,26 @@ def quantmeta(sample_name,
 
 def main():
     parser = argparse.ArgumentParser(description='QuantMeta: Standard curve generation for relating relative abundance to absolute abundance.')
-    parser.add_argument('--sample-info', required=True, default='Config/spike_in_info.txt', help='Tab-separated sample info table')
-    parser.add_argument('--dsDNA-std-mixes', required=True, default='Spike-ins/sequins_Mix_A.txt', help='Table of dsDNA standards (ID, Mass, Rel_Abund, length)')
+    parser.add_argument('--sample-info', required=True, default=None, help='Tab-separated sample info table')
+    parser.add_argument('--dsDNA-std-mixes', required=True, default='sequins_Mix_A.txt', help='Table of dsDNA standards (ID, Mass, Rel_Abund, length)')
     parser.add_argument('--ssDNA-std-mixes', required=False, default=None, help='Optional table of ssDNA standards (ID, Mass, Rel_Abund, length)')
-    parser.add_argument('--detect-threshold', required=True, default='Regressions/detect/Langenfeld_2025_E_detect.json', help='Length-dependent entropy detection threshold')
+    parser.add_argument('--detect-threshold', required=True, default='detection/Langenfeld_2025_E_detect.json', help='Length-dependent entropy detection threshold')
     parser.add_argument('--output-dir', required=True, default='QuantMeta/', help='Output directory for project')
 
     args = parser.parse_args()
 
     sample_info_path = args.sample_info
-    if sample_info_path == 'Config/spike_in_info.txt':
-        sample_info_path = get_sample_info_path('Config', 'spike_in_info.txt')
     sample_info = pd.read_csv(sample_info_path, sep='\t', header=0)
     dsDNA_stds_path = args.dsDNA_std_mixes
-    if dsDNA_stds_path == 'Spike-ins/sequins_Mix_A.txt':
+    if dsDNA_stds_path == 'sequins_Mix_A.txt':
         dsDNA_stds_path = get_std_file_path('Spike-ins', 'sequins_Mix_A.txt')
     dsDNA_stds = pd.read_csv(dsDNA_stds_path, sep='\t', header=0)
     ssDNA_stds_path = args.ssDNA_std_mixes if args.ssDNA_std_mixes else None
-    if ssDNA_stds_path == 'Spike-ins/ssDNA_stds.txt':
+    if ssDNA_stds_path == 'ssDNA_stds.txt':
         ssDNA_stds_path = get_ssdna_file_path('Spike-ins', 'ssDNA_stds.txt')
     ssDNA_stds = pd.read_csv(ssDNA_stds_path, sep='\t', header=0) if ssDNA_stds_path else None
     detect_thresh_path = args.detect_threshold
-    if detect_thresh_path == 'Regressions/detect/Langenfeld_2025_E_detect.json':
+    if detect_thresh_path == 'detection/Langenfeld_2025_E_detect.json':
         detect_thresh_path = get_detect_thresh_path('Regressions', 'detect', 'Langenfeld_2025_E_detect.json')
     detect_model = load_detection_model(detect_thresh_path)
     out_dir = args.output_dir

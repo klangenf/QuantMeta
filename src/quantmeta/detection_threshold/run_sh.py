@@ -24,11 +24,11 @@ def main():
     parser = argparse.ArgumentParser(
         description='Generate entropy-based detection thresholds with user-specified minimum coverage and read distribution thresholds. This step is optional if users need different thresholds than those established by Langenfeld et al. 2025.'
     )
-    parser.add_argument('--config', '-c', default='Config/sample_list.txt', help='Config file of samples (default: Config/sample_list.txt)')
+    parser.add_argument('--config', '-c', default=None, help='Config file of samples (default: none, required)')
     parser.add_argument('--fastq-dir', '-fq', default='Reads/', help='Directory containing deinterleaved fastq files named as [sample_name]_R1.fastq.gz and [sample_name]_R2.fastq.gz (default: Reads/)')
-    parser.add_argument('--standards', '-std', default='Map_Indexes/Langenfeld_2025_standards.fasta', help='Fasta file with standard sequences (default: Map_Indexes/Langenfeld_2025_standards.fasta)')
-    parser.add_argument('--dsDNA-std-file', '-mix', default='Spike-ins/sequins_Mix_A.txt', help='Table of dsDNA standards (ID, Mass, Rel_Abund, length) (default: Spike-ins/sequins_Mix_A.txt)')
-    parser.add_argument('--ssDNA-std-file', '-ssmix', default=None, help='Optional table of ssDNA standards (ID, Mass, Rel_Abund, length) (default: none, optional for Langenfeld et al. 2025 ssDNA standards specify Spike-ins/ssDNA_stds.txt)')
+    parser.add_argument('--standards', '-std', default='Langenfeld_2025_standards.fasta', help='Fasta file with standard sequences (default: Langenfeld_2025_standards.fasta)')
+    parser.add_argument('--dsDNA-std-file', '-mix', default='sequins_Mix_A.txt', help='Table of dsDNA standards (ID, Mass, Rel_Abund, length) (default: sequins_Mix_A.txt)')
+    parser.add_argument('--ssDNA-std-file', '-ssmix', default=None, help='Optional table of ssDNA standards (ID, Mass, Rel_Abund, length) (default: none, optional for Langenfeld et al. 2025 ssDNA standards specify ssDNA_stds.txt)')
     parser.add_argument('--test-database', '-test', required=True, help='Fasta file with test sequences (default: none, required for regression builder)')
     parser.add_argument('--test-bam-dir', '-tb', default='Mapping/', help='Directory containing sorted bam files of mapping reads to test database named as [sample_name]_[test_name]_sorted.bam (default: Mapping/)')
     parser.add_argument('--test-name', '-tn', required=True, help='Name for test database (default: none, required, used for naming output files)')

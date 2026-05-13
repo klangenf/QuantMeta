@@ -15,8 +15,8 @@ BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$BASE_DIR"
 
 # Default values
-config="${BASE_DIR}/../data/Config/sample_list.txt"
-fastq_dir="${BASE_DIR}/../data/Reads/"
+config=""
+fastq_dir="Reads/"
 standards="${BASE_DIR}/../data/Map_Indexes/Langenfeld_2025_standards.fasta"
 mix="${BASE_DIR}/../data/Spike-ins/sequins_Mix_A.txt"
 ssmix=""
@@ -34,10 +34,10 @@ usage() {
 Usage: $0 [OPTIONS]
 
 Options:
-  -c, --config FILE               Config file of samples (default: Config/sample_list.txt)
+  -c, --config FILE               Config file of samples (default: none, required)
   -fq, --fastq-dir DIR            Directory containing deinterleaved fastq files named as {sample_name}_R1.fastq.gz and {sample_name}_R2.fastq.gz (default: Reads/)
-  -std, --standards FILE          Fasta file with standard sequences (default: Map_Indexes/Langenfeld_2025_standards.fasta)
-  -mix, --dsDNA-std-file FILE     Table of dsDNA standards (ID, Mass, Rel_Abund, length) (default: Spike-ins/sequins_Mix_A.txt)
+  -std, --standards FILE          Fasta file with standard sequences (default: Langenfeld_2025_standards.fasta)
+  -mix, --dsDNA-std-file FILE     Table of dsDNA standards (ID, Mass, Rel_Abund, length) (default: sequins_Mix_A.txt)
   -ssmix, --ssDNA-std-file FILE   Optional table of ssDNA standards (ID, Mass, Rel_Abund, length)
   -test, --test-database FILE     Fasta file with test sequences (default: none, required for regression builder)
   -tb, --test-bam-dir DIR         Directory containing sorted bam files of mapping reads to test database named as {sample_name}_{test_name}_sorted.bam (default: Mapping/)
@@ -49,7 +49,7 @@ Options:
   -h, --help                      Show this help message
 
 Example:
-  $0 --config Config/config_example_samples.yaml --fastq-dir Reads/ --std Map_Indexes/Langenfeld_2025_standards.fasta --mix Spike-ins/sequins_Mix_A.txt --test Map_Indexes/RefSeq_viruses.fasta --test-name RefSeq_viruses --min-coverage 0.1 --min-distribution 0.3
+  $0 --config sample_list.txt --fastq-dir Reads/ --std Langenfeld_2025_standards.fasta --mix sequins_Mix_A.txt --test test_set.fasta --test-name test_set --min-coverage 0.1 --min-distribution 0.3
 EOF
   exit 1
 }
@@ -79,7 +79,7 @@ mkdir -p "$output_dir/Mapping"
 mkdir -p "$output_dir/Regressions"
 mkdir -p "$output_dir/tmp"
 
-if [ $standards == "Map_Indexes/Langenfeld_2025_standards.fasta" ]; then
+if [ $standards == "Langenfeld_2025_standards.fasta" ]; then
     standards="${BASE_DIR}/../data/Map_Indexes/Langenfeld_2025_standards.fasta"
 fi
 bowtie2-build -f $standards ${output_dir}/Map_Indexes/standards
@@ -109,11 +109,11 @@ num_samples=$(wc -l < "$config")
 seq 0 $((num_samples - 1)) | xargs -n 1 -P "$cores" -I {} bash -c 'bash "'"$BASE_DIR"'/detection_threshold_analysis.sh" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"' _ {} "$config" "$standards" "$test_name" "$test" "$fastq_dir" "$test_bam_dir" "$output_dir" "$BASE_DIR"
 
 ### once all of the array jobs are complete, run the regression builder
-if [ $mix == "Spike-ins/sequins_Mix_A.txt" ]; then
+if [ $mix == "sequins_Mix_A.txt" ]; then
     mix="${BASE_DIR}/../data/Spike-ins/sequins_Mix_A.txt"
 fi
 
-if [ "$ssmix" == "Spike-ins/ssDNA_stds.txt" ]; then
+if [ "$ssmix" == "ssDNA_stds.txt" ]; then
     ssmix="${BASE_DIR}/../data/Spike-ins/ssDNA_stds.txt"
 fi
 
