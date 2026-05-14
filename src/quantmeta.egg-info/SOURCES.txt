@@ -1,3 +1,4 @@
+LICENSE
 README.md
 pyproject.toml
 src/quantmeta/__init__.py
