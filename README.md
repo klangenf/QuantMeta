@@ -162,7 +162,7 @@ Show this help message
   - Tab-separated txt file with 4 columns (ID, Mass, Rel_Abund, length)
     - ID: individual spike-in standard names
     - Mass: mass of standard (ng)
-    - Rel_Abund: fraction of standard in the mix
+    - Rel_Abund: fraction of standard copies in the mix
     - length: length of the standard (bp)
 
 **-ssmix**, **--ssDNA-std-file** FILE
