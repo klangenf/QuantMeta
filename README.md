@@ -155,7 +155,7 @@ Show this help message
     - Sample: sample names
     - Library_Mass: mass of DNA used in library preparation (ng)
     - DNA_Extract_Conc: concentration of DNA in the extract used for library preparations (ng/µL)
-    - Spike_Frac: fraction of total DNA from standards (example: 1% standard spike-in would be 0.01)
+    - Spike_Frac: fraction of total DNA mass from standards (example: 1% standard spike-in would be 0.01)
     - ssDNA: fraction of total DNA from ssDNA standards (if no ssDNA standards were added, input 0)
 
 **-mix**, **--dsDNA-std-file** FILE
