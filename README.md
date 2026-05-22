@@ -52,7 +52,7 @@ Minimum read distribution threshold for detection (_default: 0.3_)
 **-o**, **--output-dir** DIR  
 Directory for output files (_default: QuantMeta/_)  
 **-j**, **--cores** N  
-Number of cores (_default: 4_)  
+Number of threads (_default: 4_)  
 **-h**, **--help**  
 Show this help message
 
@@ -92,7 +92,7 @@ Window size for sliding window analysis (_default: 49_)
 **-o**, **--output-dir** DIR  
 Directory for output files (_default: QuantMeta/_)  
 **-j**, **--cores** N  
-Number of cores (_default: 4_)  
+Number of threads (_default: 4_)  
 **-h**, **--help**  
 Show this help message  
 
@@ -141,7 +141,7 @@ RMSE threshold function model for >1000 reads/bp (**recommend: using output from
 **-o**, **--output-dir** DIR  
 Directory to project outputs (_default: QuantMeta/_)  
 **-j**, **--cores** N  
-Number of cores (_default: 4_)  
+Number of threads (_default: 4_)  
 **-h**, **--help**  
 Show this help message  
 
